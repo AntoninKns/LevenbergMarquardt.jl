@@ -1,4 +1,4 @@
-using SolverBenchmark, LevenbergMarquardt, BundleAdjustmentModels, Plots, Dates
+using SolverBenchmark, LevenbergMarquardt, BundleAdjustmentModels, Plots, Dates, DataFrames
 
 function lm_benchmark(solvers :: Dict, 
                       problems :: DataFrame, 
@@ -11,16 +11,16 @@ function lm_benchmark(solvers :: Dict,
   stats = bmark_solvers(solvers, problem_list)
 
   for solver in solvers
-    open(joinpath(directory, String(solver.first) * "_stats_" *string(Dates.now())* ".log","w")) do io
+    open(joinpath(directory, String(solver.first) * "_stats_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".log"),"w") do io
       solver_df = stats[solver.first]
       pretty_latex_stats(io, solver_df[!, [:id, :name, :status, :objective, :dual_feas, :iter, :elapsed_time]])
-      pretty_stats(io, solver_df[!, [:id, :name, :status, :objective, :dual_feas, :iter, :elapsed_time]], tf=markdown)
+      pretty_stats(io, solver_df[!, [:id, :name, :status, :objective, :dual_feas, :iter, :elapsed_time]], tf=tf_markdown)
     end
   end
 
   profile_solvers(stats, costs, costnames)
 
-  savefig(joinpath(directory, "performance_profile_" * string(Dates.now()) * ".pdf"))
+  savefig(joinpath(directory, "performance_profile_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".pdf"))
 
 end
 
@@ -30,7 +30,7 @@ solvers = Dict(:levenberg_marquardt => model -> levenberg_marquardt(model),
                 :levenberg_marquardt_tr => model -> levenberg_marquardt_tr(model))
 
 df = problems_df()
-problems = df[( df.nnzj .≤ 70000 )]
+problems = df[( df.nnzj .≤ 1000000 ), :]
 
 costnames = ["elapsed time", "num eval of residual"]
 
