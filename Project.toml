@@ -1,6 +1,6 @@
 name = "LevenbergMarquardt"
 uuid = "d3d705b5-6747-488b-aca8-ed659bb41a2e"
-authors = ["AntoninKns <antonin.kenens@etu.enseeiht.fr>"]
+authors = ["AntoninKns <antonin.kenens@polymtl.ca>"]
 version = "0.1.0"
 
 [deps]
@@ -16,3 +16,7 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 SolverBenchmark = "581a75fa-a23a-52d0-a590-d6201de2218a"
 SolverCore = "ff4d7338-4cf1-434d-91df-b86cb86fb843"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+BundleAdjustmentModels = "0.2"
+NLPModels = "0.19"
