@@ -21,6 +21,7 @@ function levenberg_marquardt_tr(nls :: AbstractNLSModel;
   # We set up the initial value of the residual and Jacobien based on the starting point
   Fx = residual(nls, x)
   Jx = jac_op_residual(nls, x)
+  Fxp = similar(Fx)
 
   normFx = norm(Fx)
   normdual = normdual0 = norm(Jx'*Fx)
@@ -46,7 +47,7 @@ function levenberg_marquardt_tr(nls :: AbstractNLSModel;
     d, inner_stats = lsmr(Jx, -Fx, λ = T(λ), radius = T(Δ))
 
     xp      = x + d
-    Fxp = residual(nls, xp)
+    Fxp = residual!(nls, xp, Fxp)
     normFxp = norm(Fxp)
 
     # We test the quality of the state
@@ -64,7 +65,8 @@ function levenberg_marquardt_tr(nls :: AbstractNLSModel;
       Δ = Δ/3
     else
       x  .= xp
-      Jx = jac_op_residual(nls, x)
+      jac_coord!(nls, x, nls.vals)
+      Jx = jac_op_residual!(nls, nls.rows, nls.cols, nls.vals, nls.Jv, nls.Jtv)
       Fx = Fxp
       normFx = normFxp
       Jtr = Jx'*Fx

@@ -16,10 +16,10 @@ function levenberg_marquardt(nls :: AbstractNLSModel;
                               atol=sqrt(eps(eltype(x))), 
                               rtol=eltype(x)(eps(eltype(x))^(1/3)))
 
-
   # We set up the initial value of the residual and Jacobien based on the starting point
   Fx = residual(nls, x)
   Jx = jac_op_residual(nls, x)
+  Fxp = similar(Fx)
 
   normFx = norm(Fx)
   normdual = normdual0 = norm(Jx'*Fx)
@@ -45,7 +45,7 @@ function levenberg_marquardt(nls :: AbstractNLSModel;
     d, inner_stats = lsmr(Jx, -Fx, λ = T(λ))
 
     xp      = x + d
-    Fxp = residual(nls, xp)
+    Fxp = residual!(nls, xp, Fxp)
     normFxp = norm(Fxp)
 
     # We test the quality of the state
@@ -62,7 +62,8 @@ function levenberg_marquardt(nls :: AbstractNLSModel;
       end
     else
       x  .= xp
-      Jx = jac_op_residual(nls, x)
+      jac_coord!(nls, x, nls.vals)
+      Jx = jac_op_residual!(nls, nls.rows, nls.cols, nls.vals, nls.Jv, nls.Jtv)
       Fx = Fxp
       normFx = normFxp
       Jtr = Jx'*Fx
@@ -103,8 +104,8 @@ function levenberg_marquardt(nls :: AbstractNLSModel;
 
   # We return all the logs in a dedicated structure
   return GenericExecutionStats(status, nls, solution = x,
-                  objective = obj(nls, x),
-                  dual_feas = normdual,
-                  iter = iter, 
-                  elapsed_time = el_time)
+                              objective = obj(nls, x),
+                              dual_feas = normdual,
+                              iter = iter, 
+                              elapsed_time = el_time)
 end
