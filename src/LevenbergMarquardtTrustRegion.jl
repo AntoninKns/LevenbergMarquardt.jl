@@ -82,6 +82,7 @@ function levenberg_marquardt_tr(nls :: AbstractNLSModel;
 
     # We update the logging informations
     inner_status = inner_stats.status
+    iter += 1
     @info log_row(Any[iter, (normFx^2)/2, normdual, norm(d), λ, Ared, Pred, ρ, inner_status, Δ])
 
     # We update the stopping conditions

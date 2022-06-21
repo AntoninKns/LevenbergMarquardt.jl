@@ -1,4 +1,7 @@
-using SolverBenchmark, LevenbergMarquardt, BundleAdjustmentModels, Plots, Dates, DataFrames
+using SolverBenchmark, LevenbergMarquardt, BundleAdjustmentModels, Dates, DataFrames
+ENV["GKSwstype"]="100"
+using Plots
+gr()
 
 function lm_benchmark(solvers :: Dict, 
                       problems :: DataFrame, 

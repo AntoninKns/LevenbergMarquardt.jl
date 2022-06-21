@@ -9,7 +9,6 @@ const partitions =
 ,[["problem-1102-780462-pre", "venice"]]
 ,[["problem-951-708276-pre", "venice"]]
 ,[["problem-744-543562-pre", "venice"]]
-,[["problem-1102-780462-pre", "venice"]]
 ,[["problem-16-22106-pre",	"dubrovnik"]
 ,["problem-88-64298-pre",	"dubrovnik"]
 ,["problem-135-90642-pre", "dubrovnik"]
