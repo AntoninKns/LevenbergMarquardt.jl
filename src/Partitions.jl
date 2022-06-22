@@ -1,3 +1,7 @@
+
+"""
+Partion of all the bundle adjustment problems of the BAL library, based on the time of evaluation of their residual function.
+"""
 const partitions = 
 [[["problem-1778-993923-pre", "venice"]]
 ,[["problem-1408-912229-pre", "venice"]]
