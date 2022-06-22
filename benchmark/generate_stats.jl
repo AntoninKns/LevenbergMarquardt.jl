@@ -22,7 +22,6 @@ function generate_stats(solvers :: Dict,
   for filename in filenames
     file = jldopen(joinpath(directory, "JLD2_files/", filename), "r")
     for (name, solver) in solvers
-      println(String(name))
       solver_stats = file[String(name)]
       if size(stats[name]) == (0,0)
         stats[name] = similar(solver_stats, 0)
