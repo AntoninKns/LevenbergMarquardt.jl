@@ -35,8 +35,8 @@ function generate_stats(solvers :: Dict,
   for solver in solvers
     open(joinpath(directory, "results", String(solver.first) * "_stats_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".log"),"w") do io
       solver_df = stats[solver.first]
-      pretty_latex_stats(io, solver_df[!, [:name, :nequ, :nvar, :neval_residual, :status, :objective, :dual_feas, :iter, :elapsed_time]])
-      pretty_stats(io, solver_df[!, [:name, :nequ, :nvar, :neval_residual, :status, :objective, :dual_feas, :iter, :elapsed_time]], tf=tf_markdown)
+      pretty_latex_stats(io, solver_df[!, [:name, :neval_residual, :neval_jprod_residual, :status, :objective, :dual_feas, :elapsed_time]])
+      pretty_stats(io, solver_df[!, [:name, :neval_residual, :neval_jprod_residual, :status, :objective, :dual_feas, :elapsed_time]], tf=tf_markdown)
     end
   end
 
