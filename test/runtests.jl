@@ -1,4 +1,5 @@
-using LevenbergMarquardt, BundleAdjustmentModels, Test
+using LevenbergMarquardt, BundleAdjustmentModels, NLPModels, Test
 
+#include("simple-model.jl")
 include("testLevenbergMarquardtAlgorithm.jl")
 include("testLevenbergMarquardtTrustRegion.jl")

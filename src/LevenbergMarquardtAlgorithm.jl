@@ -21,7 +21,7 @@ function levenberg_marquardt(nls :: AbstractNLSModel;
   Jx = jac_op_residual(nls, x)
   Fxp = similar(Fx)
 
-  normFx = norm(Fx)
+  normFx = normFx0 = norm(Fx)
   normdual = normdual0 = norm(Jx'*Fx)
 
   # We set up the initial parameters 
@@ -29,15 +29,20 @@ function levenberg_marquardt(nls :: AbstractNLSModel;
   λ = 0.
   T = eltype(x)
   start_time = time()
+  solver_specific = Dict(:inner_iter => 0, 
+                         :dual_feas0 => normdual0,
+                         :objective0 => normFx0^2/2)
 
   optimal = false
   small_residual = false
   tired = false
 
   # This it the logging bar to have information about the state of the algorithm
-  @info log_header([:outer_iter, :obj, :dual, :nd, :λ, :Ared, :Pred, :ρ, :inner_status],
-  [Int, T, T, T, T, T, T, T, String],
-  hdr_override=Dict(:obj => "‖F(x)‖²/2", :dual => "‖J'F‖", :nd => "‖d‖"))
+  #= @info log_header([:outer_iter, :obj, :dual, :nd, :λ, :Ared, :Pred, :ρ, :in_stat],
+  [Int, AbstractFloat, AbstractFloat, AbstractFloat, AbstractFloat, AbstractFloat, AbstractFloat, AbstractFloat, AbstractString],
+  hdr_override=Dict(:obj => "‖F(x)‖²/2", :dual => "‖J'F‖", :nd => "‖d‖")) =#
+  
+  levenberg_marquardt_log_header(nls)
 
   while !(optimal || small_residual || tired )
 
@@ -77,9 +82,11 @@ function levenberg_marquardt(nls :: AbstractNLSModel;
     end
 
     # We update the logging informations
-    inner_status = inner_stats.status
+    inner_status = change_stats(inner_stats.status)
     iter += 1
-    @info log_row(Any[iter, (normFx^2)/2, normdual, norm(d), λ, Ared, Pred, ρ, inner_status])
+    solver_specific[:inner_iter] += inner_stats.niter
+    # @info log_row(Any[iter, (normFx^2)/2, normdual, norm(d), λ, Ared, Pred, ρ, inner_status])
+    levenberg_marquardt_log_row(iter, (normFx^2)/2, normdual, norm(d), λ, Ared, Pred, ρ, inner_status, inner_stats.niter, neval_jprod_residual(nls))
 
     # We update the stopping conditions
     optimal = normdual < atol + rtol*normdual0
@@ -107,5 +114,6 @@ function levenberg_marquardt(nls :: AbstractNLSModel;
                               objective = obj(nls, x),
                               dual_feas = normdual,
                               iter = iter, 
-                              elapsed_time = el_time)
+                              elapsed_time = el_time,
+                              solver_specific = solver_specific)
 end

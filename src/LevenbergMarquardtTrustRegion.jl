@@ -11,7 +11,6 @@ function levenberg_marquardt_tr(nls :: AbstractNLSModel;
                               σ₁ :: AbstractFloat = eltype(x)(10.0), 
                               σ₂ :: AbstractFloat = eltype(x)(0.66),
                               max_eval :: Int = 10_000,
-                              λmin :: AbstractFloat = eltype(x)(1e-1),
                               Δ :: AbstractFloat = eltype(x)(10.),
                               restol=eltype(x)(eps(eltype(x))^(1/3)),
                               atol=sqrt(eps(eltype(x))), 
@@ -26,9 +25,9 @@ function levenberg_marquardt_tr(nls :: AbstractNLSModel;
   normFx = norm(Fx)
   normdual = normdual0 = norm(Jx'*Fx)
 
+  println(normdual0)
   # We set up the initial parameters 
   iter = 0
-  λ = 0.
   T = eltype(x)
   start_time = time()
 
@@ -37,32 +36,27 @@ function levenberg_marquardt_tr(nls :: AbstractNLSModel;
   tired = false
 
   # This it the logging bar to have information about the state of the algorithm
-  @info log_header([:outer_iter, :obj, :dual, :nd, :λ, :Ared, :Pred, :ρ, :inner_status, :Δ],
+  #= @info log_header([:outer_iter, :obj, :dual, :nd, :λ, :Ared, :Pred, :ρ, :inner_status, :Δ],
   [Int, T, T, T, T, T, T, T, String, T],
-  hdr_override=Dict(:obj => "‖F(x)‖²/2", :dual => "‖J'F‖", :nd => "‖d‖"))
+  hdr_override=Dict(:obj => "‖F(x)‖²/2", :dual => "‖J'F‖", :nd => "‖d‖")) =#
 
   while !(optimal || small_residual || tired )
 
     # We solve the subproblem
-    d, inner_stats = lsmr(Jx, -Fx, λ = T(λ), radius = T(Δ))
+    d, inner_stats = lsmr(Jx, -Fx, radius = T(Δ))
 
     xp      = x + d
     Fxp = residual!(nls, xp, Fxp)
     normFxp = norm(Fxp)
 
     # We test the quality of the state
-    Pred = (normFx^2 - norm(Jx * d + Fx)^2 -λ^2*norm(d)^2)/2
+    Pred = (normFx^2 - norm(Jx * d + Fx)^2)/2
     Ared = (normFx^2 - normFxp^2)/2
     ρ = Ared/Pred
 
     # Depending on the quality of the step we update the step and/or the parameters
     if ρ < η₁
-      if λ == 0
-        λ = λmin
-      else
-        λ = σ₁ * λ
-      end
-      Δ = Δ/3
+      Δ = Δ * σ₁
     else
       x  .= xp
       jac_coord!(nls, x, nls.vals)
@@ -72,18 +66,14 @@ function levenberg_marquardt_tr(nls :: AbstractNLSModel;
       Jtr = Jx'*Fx
       normdual = norm(Jtr)
       if ρ > η₂
-        λ = σ₂ * λ
-        Δ = Δ*3
-      end
-      if λ < λmin
-        λ = 0
+        Δ = Δ * σ₂
       end
     end
 
     # We update the logging informations
     inner_status = inner_stats.status
     iter += 1
-    @info log_row(Any[iter, (normFx^2)/2, normdual, norm(d), λ, Ared, Pred, ρ, inner_status, Δ])
+    #@info log_row(Any[iter, (normFx^2)/2, normdual, norm(d), λ, Ared, Pred, ρ, inner_status, Δ])
 
     # We update the stopping conditions
     optimal = normdual < atol + rtol*normdual0
