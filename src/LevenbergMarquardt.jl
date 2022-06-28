@@ -5,5 +5,6 @@ using Krylov, BundleAdjustmentModels, Printf, Logging, NLPModels, LinearAlgebra,
 include("LevenbergMarquardtAlgorithm.jl")
 include("LevenbergMarquardtTrustRegion.jl")
 include("Partitions.jl")
+include("LevenbergMarquardtUtils.jl")
 
 end
