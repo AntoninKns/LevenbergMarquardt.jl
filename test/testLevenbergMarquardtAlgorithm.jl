@@ -1,6 +1,6 @@
 
 @testset "test residual norm reduction" begin
-  model = BundleAdjustmentModel("problem-1778-993923-pre.txt.bz2","venice")
+  model = BundleAdjustmentModel("problem-1778-993923-pre.txt.bz2")
   normFx0 = 22644.967624342433
   restol = normFx0
   objtol = (restol^2)/2
@@ -9,7 +9,7 @@
 end
 
 @testset "test dual norm reduction" begin
-  model = BundleAdjustmentModel("problem-1778-993923-pre.txt.bz2","venice")
+  model = BundleAdjustmentModel("problem-1778-993923-pre.txt.bz2")
   x0 = model.meta.x0
   atol=sqrt(eps(eltype(x0)))
   rtol=eltype(x0)(eps(eltype(x0))^(1/3))

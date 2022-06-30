@@ -7,7 +7,7 @@ function lm_distributed_benchmark(solvers :: Dict,
                       partition_number :: Int, 
                       directory :: String = @__DIR__)
 
-  problem_list = (BundleAdjustmentModel(problem[1],problem[2]) for problem in LevenbergMarquardt.partitions[partition_number])
+  problem_list = (BundleAdjustmentModel(problem[1]) for problem in LevenbergMarquardt.partitions[partition_number])
 
   stats = bmark_solvers(solvers, problem_list)
 

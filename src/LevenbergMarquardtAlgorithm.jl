@@ -18,7 +18,18 @@ function levenberg_marquardt(nls :: AbstractNLSModel;
 
   # We set up the initial value of the residual and Jacobien based on the starting point
   Fx = residual(nls, x)
-  Jx = jac_op_residual(nls, x)
+
+  S = typeof(nls.meta.x0)
+  meta_nls = nls_meta(nls)
+  rows = Vector{Int}(undef, meta_nls.nnzj)
+  cols = Vector{Int}(undef, meta_nls.nnzj)
+  vals = S(undef, meta_nls.nnzj)
+  Jv = S(undef, meta_nls.nequ)
+  Jtv = S(undef, meta_nls.nvar)
+
+  jac_structure_residual!(nls, rows, cols)
+  jac_coord_residual!(nls, x, vals)
+  Jx = jac_op_residual!(nls, rows, cols, vals, Jv, Jtv)
   Fxp = similar(Fx)
 
   normFx = normFx0 = norm(Fx)
@@ -36,18 +47,13 @@ function levenberg_marquardt(nls :: AbstractNLSModel;
   optimal = false
   small_residual = false
   tired = false
-
-  # This it the logging bar to have information about the state of the algorithm
-  #= @info log_header([:outer_iter, :obj, :dual, :nd, :λ, :Ared, :Pred, :ρ, :in_stat],
-  [Int, AbstractFloat, AbstractFloat, AbstractFloat, AbstractFloat, AbstractFloat, AbstractFloat, AbstractFloat, AbstractString],
-  hdr_override=Dict(:obj => "‖F(x)‖²/2", :dual => "‖J'F‖", :nd => "‖d‖")) =#
   
   levenberg_marquardt_log_header(nls)
 
   while !(optimal || small_residual || tired )
 
     # We solve the subproblem
-    d, inner_stats = lsmr(Jx, -Fx, λ = T(λ))
+    d, inner_stats = lsmr(Jx, -Fx, λ = T(λ), axtol=1e-3, btol=1e-3, atol=1e-3, rtol=1e-3, etol=1e-3)
 
     xp      = x + d
     Fxp = residual!(nls, xp, Fxp)
@@ -67,8 +73,8 @@ function levenberg_marquardt(nls :: AbstractNLSModel;
       end
     else
       x  .= xp
-      jac_coord!(nls, x, nls.vals)
-      Jx = jac_op_residual!(nls, nls.rows, nls.cols, nls.vals, nls.Jv, nls.Jtv)
+      jac_coord_residual!(nls, x, vals)
+      Jx = jac_op_residual!(nls, rows, cols, vals, Jv, Jtv)
       Fx = Fxp
       normFx = normFxp
       Jtr = Jx'*Fx
@@ -85,7 +91,6 @@ function levenberg_marquardt(nls :: AbstractNLSModel;
     inner_status = change_stats(inner_stats.status)
     iter += 1
     solver_specific[:inner_iter] += inner_stats.niter
-    # @info log_row(Any[iter, (normFx^2)/2, normdual, norm(d), λ, Ared, Pred, ρ, inner_status])
     levenberg_marquardt_log_row(iter, (normFx^2)/2, normdual, norm(d), λ, Ared, Pred, ρ, inner_status, inner_stats.niter, neval_jprod_residual(nls))
 
     # We update the stopping conditions

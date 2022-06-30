@@ -31,6 +31,9 @@ function generate_stats(solvers :: Dict,
     close(file)
   end
 
+  # TODO : Add :dual_feas0, :residual0 and :inner_iter to the table
+  # TODO : Add :neval_jprod_residual to the profile_solvers
+
   # We generate the stats table out of the stats dictionary
   for solver in solvers
     open(joinpath(directory, "results", String(solver.first) * "_stats_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".log"),"w") do io
@@ -47,7 +50,7 @@ function generate_stats(solvers :: Dict,
 
 end
 
-# We choos the solvers
+# We choose the solvers
 solvers = Dict(:levenberg_marquardt => model -> levenberg_marquardt(model),
                 :levenberg_marquardt_tr => model -> levenberg_marquardt_tr(model))
 
