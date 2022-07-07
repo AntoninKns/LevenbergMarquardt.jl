@@ -1,19 +1,29 @@
+@testset "test levenberg_marquardt" begin
+  model = SimpleNLSModel()
+  stats = levenberg_marquardt(model)
+  @test stats.rNorm ≤ 1e-5
+end
 
 @testset "test residual norm reduction" begin
-  model = BundleAdjustmentModel("problem-1778-993923-pre.txt.bz2")
-  normFx0 = 22644.967624342433
-  restol = normFx0
-  objtol = (restol^2)/2
+  model = SimpleNLSModel()
+  normFx0 = norm(residual(model, model.meta.x0))
+  restol = normFx0/100
   stats = levenberg_marquardt(model, restol=restol)
-  @test stats.objective ≤ objtol
+  @test stats.rNorm ≤ restol
 end
 
 @testset "test dual norm reduction" begin
-  model = BundleAdjustmentModel("problem-1778-993923-pre.txt.bz2")
+  model = SimpleNLSModel()
   x0 = model.meta.x0
-  atol=sqrt(eps(eltype(x0)))
-  rtol=eltype(x0)(eps(eltype(x0))^(1/3))
-  normdual0 = 3.190087189251177e15
-  stats = levenberg_marquardt(model)
-  @test stats.dual_feas ≤ atol + rtol*normdual0
+  atol=1e-2
+  rtol=1e-2
+  jac_structure_residual!(model, model.rows, model.cols)
+  jac_coord_residual!(model, x0, model.vals)
+  Jv = similar(x0, model.nls_meta.nequ)
+  Jtv = similar(x0, model.meta.nvar)
+  Jx = jac_op_residual!(model, model.rows, model.cols, model.vals, Jv, Jtv)
+  Fx = residual(model, x0)
+  ArNorm0 = norm(Jx * Fx)
+  stats = levenberg_marquardt(model, atol=atol, rtol=rtol)
+  @test stats.ArNorm ≤ atol + rtol*ArNorm0
 end
