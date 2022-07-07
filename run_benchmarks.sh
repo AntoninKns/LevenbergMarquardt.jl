@@ -21,6 +21,6 @@ qsub -q hs22 -b n -N ak_bm_p18 -cwd -o log_output/output18.log -e log_error/erro
 qsub -q hs22 -b n -N ak_bm_p19 -cwd -o log_output/output19.log -e log_error/error19.log partition_scripts/partition19.sh
 qsub -q hs22 -b n -N ak_bm_p20 -cwd -o log_output/output20.log -e log_error/error20.log partition_scripts/partition20.sh
 qsub -q hs22 -b n -N ak_bm_p21 -cwd -o log_output/output21.log -e log_error/error21.log partition_scripts/partition21.sh
-qsub -q hs22 -b n -N ak_bm_p21 -cwd -o log_output/output22.log -e log_error/error22.log partition_scripts/partition22.sh
-qsub -q hs22 -b n -N ak_bm_p21 -cwd -o log_output/output23.log -e log_error/error23.log partition_scripts/partition23.sh
-qsub -q hs22 -b n -N ak_bm_p21 -cwd -o log_output/output24.log -e log_error/error24.log partition_scripts/partition24.sh
+qsub -q hs22 -b n -N ak_bm_p22 -cwd -o log_output/output22.log -e log_error/error22.log partition_scripts/partition22.sh
+qsub -q hs22 -b n -N ak_bm_p23 -cwd -o log_output/output23.log -e log_error/error23.log partition_scripts/partition23.sh
+qsub -q hs22 -b n -N ak_bm_p24 -cwd -o log_output/output24.log -e log_error/error24.log partition_scripts/partition24.sh
