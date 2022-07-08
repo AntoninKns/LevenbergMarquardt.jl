@@ -8,6 +8,7 @@ may be used in order to create these vectors.
 """
 mutable struct LMSolver{T}
 
+  x :: AbstractVector
   Fx :: AbstractVector
   Fxp :: AbstractVector
   xp :: AbstractVector
@@ -29,7 +30,7 @@ mutable struct LMSolver{T}
 
   function LMSolver(model)
   
-    x = model.meta.x0
+    x = copy(model.meta.x0)
     m = model.nls_meta.nequ
     n = model.meta.nvar
     nnzj = model.nls_meta.nnzj
@@ -55,7 +56,7 @@ mutable struct LMSolver{T}
 
     stats = LMStats(model, :unknown, similar(x), zero(T), zero(T), zero(T), zero(T), 0, 0, 0.)
 
-    solver = new{T}(Fx, Fxp, xp, Fxm, rows, cols, vals, Jv, Jtv, Ju, Jtu, in_solver, stats)
+    solver = new{T}(x, Fx, Fxp, xp, Fxm, rows, cols, vals, Jv, Jtv, Ju, Jtu, in_solver, stats)
 
     return solver
   end

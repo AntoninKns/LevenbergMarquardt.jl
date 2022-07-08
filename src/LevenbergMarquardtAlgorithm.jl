@@ -16,7 +16,6 @@ LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
 function levenberg_marquardt!(solver :: LMSolver{T}, 
                               model :: AbstractNLSModel;
-                              x :: AbstractVector = copy(model.meta.x0),
                               λ :: AbstractFloat = zero(T),
                               η₁ :: AbstractFloat = T(1e-4), 
                               η₂ :: AbstractFloat = T(0.99),
@@ -36,14 +35,14 @@ function levenberg_marquardt!(solver :: LMSolver{T},
                               in_conlim :: AbstractFloat = 1/√eps(T),
                               verbose :: Bool = true) where T <: AbstractFloat
 
-  # We set up the initial value of the residual and Jacobien based on the starting point
-  Fx, Fxp, xp, Fxm = solver.Fx, solver.Fxp, solver.xp, solver.Fxm
+  # Set up the initial value of the residual and Jacobin at the starting point
+  x, Fx, Fxp, xp, Fxm = solver.x, solver.Fx, solver.Fxp, solver.xp, solver.Fxm
   rows, cols, vals = solver.rows, solver.cols, solver.vals
   Jv, Jtv, Ju, Jtu = solver.Jv, solver.Jtv, solver.Ju, solver.Jtu
-  m, n, nnzj = model.nls_meta.nequ, model.meta.nvar, model.nls_meta.nnzj
+  m, n = model.nls_meta.nequ, model.meta.nvar
   in_solver = solver.in_solver
 
-  Fx = residual!(model, x, Fx)
+  residual!(model, x, Fx)
 
   jac_structure_residual!(model, rows, cols)
   jac_coord_residual!(model, x, vals)
@@ -56,7 +55,7 @@ function levenberg_marquardt!(solver :: LMSolver{T},
   solver.stats.rNorm0 = rNorm0
   solver.stats.ArNorm0 = ArNorm0
 
-  # We set up the initial parameters 
+  # Set up initial parameters 
   iter = 0
   start_time = time()
 
@@ -68,7 +67,7 @@ function levenberg_marquardt!(solver :: LMSolver{T},
 
   while !(optimal || small_residual || tired )
 
-    # We solve the subproblem
+    # Solve the subproblem
     Fxm .= .-Fx
     in_solver = lsmr!(in_solver, Jx, Fxm, 
                           λ = λ, 
@@ -85,8 +84,8 @@ function levenberg_marquardt!(solver :: LMSolver{T},
     Fxp = residual!(model, xp, Fxp)
     rNormp = BLAS.nrm2(m, Fxp, 1)
 
-    # We test the quality of the state
-    Ju = mul!(Ju, Jx, d)
+    # Test the quality of the step
+    mul!(Ju, Jx, d)
     Ju .= Ju .+ Fx
     normJu = BLAS.nrm2(m, Ju, 1)
     Pred = (rNorm^2 - normJu^2 - λ^2*dNorm^2)/2
@@ -106,7 +105,7 @@ function levenberg_marquardt!(solver :: LMSolver{T},
       Jx = jac_op_residual!(model, rows, cols, vals, Jv, Jtv)
       Fx .= Fxp
       rNorm = rNormp
-      Jtu = mul!(Jtu, transpose(Jx), Fx)
+      mul!(Jtu, transpose(Jx), Fx)
       ArNorm = BLAS.nrm2(n, Jtu, 1)
       if ρ > η₂
         λ = σ₂ * λ
@@ -116,25 +115,25 @@ function levenberg_marquardt!(solver :: LMSolver{T},
       end
     end
 
-    # We update the logging informations
+    # Update logging information
     verbose && (inner_status = change_stats(in_solver.stats.status))
     iter += 1
     solver.stats.inner_iter += in_solver.stats.niter
     verbose && (levenberg_marquardt_log_row(iter, (rNorm^2)/2, ArNorm, dNorm, λ, Ared, Pred, ρ, inner_status, in_solver.stats.niter, neval_jprod_residual(model)))
 
-    # We update the stopping conditions
+    # Update stopping conditions
     optimal = ArNorm < atol + rtol*ArNorm0
     tired = neval_residual(model) > max_eval
     small_residual = rNorm < restol
 
   end
 
-  # We update the last parameters
+  # Update solver stats
   elapsed_time = time()-start_time
   solver.stats.iter = iter
   solver.stats.elapsed_time = elapsed_time
   
-  # we update the status of the solver
+  # Update solver status
   if optimal 
     status = :first_order
   elseif small_residual
@@ -144,7 +143,6 @@ function levenberg_marquardt!(solver :: LMSolver{T},
   else
     status = :unknown
   end
-
-  # We return all the logs in a dedicated structure
+  
   return solver
 end
