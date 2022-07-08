@@ -37,7 +37,8 @@ SimpleNLSModel() = SimpleNLSModel(Float64)
 function NLPModels.residual!(nls::SimpleNLSModel, x::AbstractVector, Fx::AbstractVector)
   @lencheck 2 x Fx
   increment!(nls, :neval_residual)
-  Fx .= [1 - x[1]; 10 * (x[2] - x[1]^2)]
+  Fx[1] = 1 - x[1]
+  Fx[2] = 10 * (x[2] - x[1]^2)
   return Fx
 end
 
@@ -48,8 +49,8 @@ function NLPModels.jac_structure_residual!(
   cols::AbstractVector{<:Integer},
 )
   @lencheck 3 rows cols
-  rows .= [1, 2, 2]
-  cols .= [1, 1, 2]
+  rows[1], rows[2], rows[3] = 1, 2, 2
+  cols[1], cols[2], cols[3] = 1, 1, 2
   return rows, cols
 end
 
@@ -57,7 +58,7 @@ function NLPModels.jac_coord_residual!(nls::SimpleNLSModel, x::AbstractVector, v
   @lencheck 2 x
   @lencheck 3 vals
   increment!(nls, :neval_jac_residual)
-  vals .= [-1, -20x[1], 10]
+  vals[1], vals[2], vals[3] = -1, -20*x[1], 10
   return vals
 end
 
@@ -69,7 +70,8 @@ function NLPModels.jprod_residual!(
 )
   @lencheck 2 x v Jv
   increment!(nls, :neval_jprod_residual)
-  Jv .= [-v[1]; -20 * x[1] * v[1] + 10 * v[2]]
+  Jv[1] = -v[1]
+  Jv[2] = -20 * x[1] * v[1] + 10 * v[2]
   return Jv
 end
 
@@ -81,6 +83,7 @@ function NLPModels.jtprod_residual!(
 )
   @lencheck 2 x v Jtv
   increment!(nls, :neval_jtprod_residual)
-  Jtv .= [-v[1] - 20 * x[1] * v[2]; 10 * v[2]]
+  Jtv[1] = -v[1] - 20 * x[1] * v[2]
+  Jtv[2] = 10 * v[2]
   return Jtv
 end
