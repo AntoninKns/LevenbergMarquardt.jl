@@ -49,7 +49,7 @@ function levenberg_marquardt!(solver :: LMSolver{T},
   Jx = jac_op_residual!(model, rows, cols, vals, Jv, Jtv)
 
   rNorm = rNorm0 = BLAS.nrm2(m, Fx, 1)
-  Jtu = mul!(Jtu, transpose(Jx), Fx)
+  mul!(Jtu, transpose(Jx), Fx)
   ArNorm = ArNorm0 = BLAS.nrm2(n, Jtu, 1)
 
   solver.stats.rNorm0 = rNorm0
@@ -58,6 +58,7 @@ function levenberg_marquardt!(solver :: LMSolver{T},
   # Set up initial parameters 
   iter = 0
   start_time = time()
+  optimal_cond = atol + rtol*ArNorm0
 
   optimal = false
   small_residual = false
@@ -70,14 +71,15 @@ function levenberg_marquardt!(solver :: LMSolver{T},
     # Solve the subproblem
     Fxm .= .-Fx
     in_solver = lsmr!(in_solver, Jx, Fxm, 
-                          λ = λ, 
-                          axtol = in_axtol,
-                          btol = in_btol,
-                          atol = in_atol,
-                          rtol = in_rtol,
-                          etol = in_etol,
-                          itmax = in_itmax,
-                          conlim = in_conlim)
+                      λ = λ, 
+                      axtol = in_axtol,
+                      btol = in_btol,
+                      atol = in_atol,
+                      rtol = in_rtol,
+                      etol = in_etol,
+                      itmax = in_itmax,
+                      conlim = in_conlim)
+
     d = in_solver.x
     dNorm = BLAS.nrm2(d)
     xp .= x .+ d
@@ -122,7 +124,7 @@ function levenberg_marquardt!(solver :: LMSolver{T},
     verbose && (levenberg_marquardt_log_row(iter, (rNorm^2)/2, ArNorm, dNorm, λ, Ared, Pred, ρ, inner_status, in_solver.stats.niter, neval_jprod_residual(model)))
 
     # Update stopping conditions
-    optimal = ArNorm < atol + rtol*ArNorm0
+    optimal = ArNorm < optimal_cond
     tired = neval_residual(model) > max_eval
     small_residual = rNorm < restol
 
@@ -143,6 +145,6 @@ function levenberg_marquardt!(solver :: LMSolver{T},
   else
     status = :unknown
   end
-  
+
   return solver
 end
