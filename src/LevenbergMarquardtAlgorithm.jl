@@ -14,32 +14,31 @@ end
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt!(solver :: LMSolver{T}, 
-                              model :: AbstractNLSModel;
-                              λ :: AbstractFloat = zero(T),
-                              η₁ :: AbstractFloat = T(1e-4), 
-                              η₂ :: AbstractFloat = T(0.99),
-                              σ₁ :: AbstractFloat = T(10.0), 
-                              σ₂ :: AbstractFloat = T(0.1),
-                              max_eval :: Int = 10_000,
-                              λmin :: AbstractFloat = T(1e-1),
-                              restol = T(eps(T)^(1/3)),
-                              atol = zero(T), 
-                              rtol = T(eps(T)^(1/3)),
-                              in_axtol :: AbstractFloat = √eps(T),
-                              in_btol :: AbstractFloat = √eps(T),
-                              in_atol :: AbstractFloat = zero(T),
-                              in_rtol :: AbstractFloat = zero(T),
-                              in_etol :: AbstractFloat = √eps(T),
-                              in_itmax :: Int = 0,
-                              in_conlim :: AbstractFloat = 1/√eps(T),
-                              verbose :: Bool = true) where T <: AbstractFloat
+function levenberg_marquardt!(solver    :: LMSolver{T}, 
+                              model     :: AbstractNLSModel;
+                              λ         :: T = zero(T),
+                              η₁        :: T = eps(T)^(1/4), 
+                              η₂        :: T = T(0.99),
+                              σ₁        :: T = T(10.0), 
+                              σ₂        :: T = T(0.1),
+                              max_eval  :: Int = 10_000,
+                              λmin      :: T = T(1e-1),
+                              restol    :: T = T(eps(T)^(1/3)),
+                              atol      :: T = zero(T), 
+                              rtol      :: T = T(eps(T)^(1/3)),
+                              in_axtol  :: T = zero(T),
+                              in_btol   :: T = zero(T),
+                              in_atol   :: T = zero(T),
+                              in_rtol   :: T = zero(T),
+                              in_etol   :: T = zero(T),
+                              in_itmax  :: Int = 0,
+                              in_conlim :: T = 1/√eps(T),
+                              verbose   :: Bool = true) where T
 
   # Set up the initial value of the residual and Jacobin at the starting point
-  x, Fx, Fxp, xp, Fxm = solver.x, solver.Fx, solver.Fxp, solver.xp, solver.Fxm
+  x, Fx, Fxp, xp, Fxm = model.meta.x0, solver.Fx, solver.Fxp, solver.xp, solver.Fxm
   rows, cols, vals = solver.rows, solver.cols, solver.vals
   Jv, Jtv, Ju, Jtu = solver.Jv, solver.Jtv, solver.Ju, solver.Jtu
-  m, n = model.nls_meta.nequ, model.meta.nvar
   in_solver = solver.in_solver
 
   residual!(model, x, Fx)
@@ -48,14 +47,14 @@ function levenberg_marquardt!(solver :: LMSolver{T},
   jac_coord_residual!(model, x, vals)
   Jx = jac_op_residual!(model, rows, cols, vals, Jv, Jtv)
 
-  rNorm = rNorm0 = BLAS.nrm2(m, Fx, 1)
-  mul!(Jtu, transpose(Jx), Fx)
-  ArNorm = ArNorm0 = BLAS.nrm2(n, Jtu, 1)
+  rNorm = rNorm0 = norm(Fx)
+  mul!(Jtu, Jx', Fx)
+  ArNorm = ArNorm0 = norm(Jtu)
 
   solver.stats.rNorm0 = rNorm0
   solver.stats.ArNorm0 = ArNorm0
 
-  # Set up initial parameters 
+  # Set up initial parameters
   iter = 0
   start_time = time()
   optimal_cond = atol + rtol*ArNorm0
@@ -69,7 +68,8 @@ function levenberg_marquardt!(solver :: LMSolver{T},
   while !(optimal || small_residual || tired )
 
     # Solve the subproblem
-    Fxm .= .-Fx
+    Fxm .= Fx
+    Fxm .*= -1
     in_solver = lsmr!(in_solver, Jx, Fxm, 
                       λ = λ, 
                       axtol = in_axtol,
@@ -81,22 +81,23 @@ function levenberg_marquardt!(solver :: LMSolver{T},
                       conlim = in_conlim)
 
     d = in_solver.x
-    dNorm = BLAS.nrm2(d)
+    dNorm = norm(d)
     xp .= x .+ d
     Fxp = residual!(model, xp, Fxp)
-    rNormp = BLAS.nrm2(m, Fxp, 1)
+    rNormp = norm(Fxp)
 
     # Test the quality of the step
     mul!(Ju, Jx, d)
     Ju .= Ju .+ Fx
-    normJu = BLAS.nrm2(m, Ju, 1)
-    Pred = (rNorm^2 - normJu^2 - λ^2*dNorm^2)/2
-    Ared = (rNorm^2 - rNormp^2)/2
+    normJu = norm(Ju)
+    rNorm² = rNorm^2
+    Pred = (rNorm² - (normJu^2 + λ^2*dNorm^2))/2
+    Ared = (rNorm² - rNormp^2)/2
     ρ = Ared/Pred
 
     # Depending on the quality of the step we update the step and/or the parameters
     if ρ < η₁
-      if λ == zero(T)
+      if λ < λmin
         λ = λmin
       else
         λ = σ₁ * λ
@@ -107,8 +108,8 @@ function levenberg_marquardt!(solver :: LMSolver{T},
       Jx = jac_op_residual!(model, rows, cols, vals, Jv, Jtv)
       Fx .= Fxp
       rNorm = rNormp
-      mul!(Jtu, transpose(Jx), Fx)
-      ArNorm = BLAS.nrm2(n, Jtu, 1)
+      mul!(Jtu, Jx', Fx)
+      ArNorm = norm(Jtu)
       if ρ > η₂
         λ = σ₂ * λ
       end

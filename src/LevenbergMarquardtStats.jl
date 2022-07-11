@@ -11,14 +11,14 @@ Type for statistics returned by the LevenbergMarquardt solvers, the attributes a
   - inner_iter
   - elapsed_time
 """
-mutable struct LMStats
+mutable struct LMStats{T,S}
   model :: AbstractNLSModel
   status :: Symbol
-  solution :: AbstractVector
-  rNorm :: AbstractFloat
-  rNorm0 :: AbstractFloat
-  ArNorm :: AbstractFloat
-  ArNorm0 :: AbstractFloat
+  solution :: S
+  rNorm :: T
+  rNorm0 :: T
+  ArNorm :: T
+  ArNorm0 :: T
   iter :: Int
   inner_iter :: Int
   elapsed_time :: Float64

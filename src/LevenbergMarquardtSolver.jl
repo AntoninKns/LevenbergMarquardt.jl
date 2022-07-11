@@ -6,36 +6,36 @@ The outer constructor
     solver = LMSolver(n, m, S)
 may be used in order to create these vectors.
 """
-mutable struct LMSolver{T}
+mutable struct LMSolver{T,S}
 
-  x :: AbstractVector
-  Fx :: AbstractVector
-  Fxp :: AbstractVector
-  xp :: AbstractVector
-  Fxm :: AbstractVector
+  x :: S
+  Fx :: S
+  Fxp :: S
+  xp :: S
+  Fxm :: S
 
   rows :: Vector{Int}
   cols :: Vector{Int}
-  vals :: AbstractVector
+  vals :: S
 
-  Jv :: AbstractVector
-  Jtv :: AbstractVector
+  Jv :: S
+  Jtv :: S
 
-  Ju :: AbstractVector
-  Jtu :: AbstractVector
+  Ju :: S
+  Jtu :: S
 
   in_solver :: KrylovSolver
 
-  stats :: LMStats
+  stats :: LMStats{T,S}
 
   function LMSolver(model)
   
-    x = copy(model.meta.x0)
+    x = similar(model.meta.x0)
     m = model.nls_meta.nequ
     n = model.meta.nvar
     nnzj = model.nls_meta.nnzj
+    T = eltype(x)
     S = typeof(x)
-    T = typeof(x[1])
 
     Fx = similar(x, m)
     Fxp = similar(x, m)
@@ -56,7 +56,7 @@ mutable struct LMSolver{T}
 
     stats = LMStats(model, :unknown, similar(x), zero(T), zero(T), zero(T), zero(T), 0, 0, 0.)
 
-    solver = new{T}(x, Fx, Fxp, xp, Fxm, rows, cols, vals, Jv, Jtv, Ju, Jtu, in_solver, stats)
+    solver = new{T,S}(x, Fx, Fxp, xp, Fxm, rows, cols, vals, Jv, Jtv, Ju, Jtu, in_solver, stats)
 
     return solver
   end
