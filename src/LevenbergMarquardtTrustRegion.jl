@@ -14,7 +14,7 @@ Algorithm of TR Levenberg Marquardt based on
 """
 function levenberg_marquardt_tr!(solver    :: LMSolver{T}, 
                                   model     :: AbstractNLSModel;
-                                  Δ         :: T = T(10.0),
+                                  Δ         :: T = T(1e4),
                                   η₁        :: T = eps(T)^(1/4), 
                                   η₂        :: T = T(0.99),
                                   σ₁        :: T = T(10.0), 
