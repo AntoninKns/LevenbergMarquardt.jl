@@ -1,79 +1,78 @@
-
 """
 Partion of all the bundle adjustment problems of the BAL library, based on the time of evaluation of their residual function.
 """
 const partitions = 
-[[["problem-1778-993923-pre", "venice"]]
-,[["problem-1408-912229-pre", "venice"]]
-,[["problem-1350-894716-pre", "venice"]]
-,[["problem-1288-866452-pre", "venice"]]
-,[["problem-1238-843534-pre", "venice"]]
-,[["problem-1184-816583-pre", "venice"]]
-,[["problem-1158-802917-pre", "venice"]]
-,[["problem-1102-780462-pre", "venice"]]
-,[["problem-951-708276-pre", "venice"]]
-,[["problem-744-543562-pre", "venice"]]
-,[["problem-16-22106-pre",	"dubrovnik"]
-,["problem-88-64298-pre",	"dubrovnik"]
-,["problem-135-90642-pre", "dubrovnik"]
-,["problem-142-93602-pre", "dubrovnik"]
-,["problem-150-95821-pre", "dubrovnik"]
-,["problem-161-103832-pre",	"dubrovnik"]]
-,[["problem-173-111908-pre",	"dubrovnik"]
-,["problem-182-116770-pre",	"dubrovnik"]
-,["problem-202-132796-pre",	"dubrovnik"]
-,["problem-237-154414-pre",	"dubrovnik"]]
-,[["problem-253-163691-pre",	"dubrovnik"]
-,["problem-262-169354-pre",	"dubrovnik"]
-,["problem-273-176305-pre",	"dubrovnik"]]
-,[["problem-287-182023-pre",	"dubrovnik"]
-,["problem-308-195089-pre",	"dubrovnik"]
-,["problem-21-11315-pre",	"trafalgar"]
-,["problem-39-18060-pre",	"trafalgar"]
-,["problem-50-20431-pre",	"trafalgar"]
-,["problem-126-40037-pre",	"trafalgar"]
-,["problem-138-44033-pre",	"trafalgar"]
-,["problem-161-48126-pre",	"trafalgar"]]
-,[["problem-356-226730-pre",	"dubrovnik"]
-,["problem-170-49267-pre",	"trafalgar"]
-,["problem-174-50489-pre",	"trafalgar"]
-,["problem-193-53101-pre",	"trafalgar"]
-,["problem-201-54427-pre",	"trafalgar"]
-,["problem-206-54562-pre",	"trafalgar"]
-,["problem-215-55910-pre",	"trafalgar"]
-,["problem-225-57665-pre",	"trafalgar"]
-,["problem-257-65132-pre",	"trafalgar"]]
-,[["problem-49-7776-pre",	"ladybug"]
-,["problem-73-11032-pre",	"ladybug"]
-,["problem-138-19878-pre",	"ladybug"]
-,["problem-318-41628-pre",	"ladybug"]
-,["problem-372-47423-pre",	"ladybug"]
-,["problem-412-52215-pre",	"ladybug"]
-,["problem-460-56811-pre",	"ladybug"]
-,["problem-539-65220-pre",	"ladybug"]
-,["problem-598-69218-pre",	"ladybug"]
-,["problem-646-73584-pre",	"ladybug"]
-,["problem-707-78455-pre",	"ladybug"]
-,["problem-783-84444-pre",	"ladybug"]]
-,[["problem-810-88814-pre",	"ladybug"]
-,["problem-856-93344-pre",	"ladybug"]
-,["problem-885-97473-pre",	"ladybug"]
-,["problem-931-102699-pre",	"ladybug"]
-,["problem-969-105826-pre",	"ladybug"]
-,["problem-1031-110968-pre",	"ladybug"]]
-,[["problem-1064-113655-pre",	"ladybug"]
-,["problem-1118-118384-pre",	"ladybug"]
-,["problem-1152-122269-pre",	"ladybug"]
-,["problem-1197-126327-pre",	"ladybug"]
-,["problem-1235-129634-pre",	"ladybug"]]
-,[["problem-1266-132593-pre",	"ladybug"]
-,["problem-1340-137079-pre",	"ladybug"]
-,["problem-1469-145199-pre",	"ladybug"]
-,["problem-1514-147317-pre",	"ladybug"]]
-,[["problem-1587-150845-pre",	"ladybug"]
-,["problem-1642-153820-pre",	"ladybug"]
-,["problem-1695-155710-pre",	"ladybug"]
-,["problem-52-64053-pre",	"venice"]
-,["problem-89-110973-pre",	"venice"]]
-,[["problem-245-198739-pre",	"venice"]
-,["problem-427-310384-pre",	"venice"]]]
+[["problem-744-543562-pre"]
+,["problem-16-22106-pre"]
+,["problem-88-64298-pre"]
+,["problem-135-90642-pre"
+,"problem-142-93602-pre"
+,"problem-150-95821-pre"]
+,["problem-161-103832-pre"
+,"problem-173-111908-pre"
+,"problem-182-116770-pre"]
+,["problem-237-154414-pre"
+,"problem-253-163691-pre"
+,"problem-262-169354-pre"]
+,["problem-287-182023-pre"
+,"problem-308-195089-pre"
+,"problem-21-11315-pre"]
+,["problem-50-20431-pre"
+,"problem-126-40037-pre"
+,"problem-138-44033-pre"
+,"problem-951-708276-pre"]
+,["problem-356-226730-pre"
+,"problem-170-49267-pre"
+,"problem-174-50489-pre"]
+,["problem-201-54427-pre"
+,"problem-206-54562-pre"
+,"problem-215-55910-pre"]
+,["problem-49-7776-pre"
+,"problem-73-11032-pre"
+,"problem-138-19878-pre"]
+,["problem-412-52215-pre"
+,"problem-460-56811-pre"
+,"problem-539-65220-pre"
+,"problem-598-69218-pre"
+,"problem-646-73584-pre"]
+,["problem-810-88814-pre"
+,"problem-856-93344-pre"
+,"problem-885-97473-pre"
+,"problem-931-102699-pre"
+,"problem-969-105826-pre"]
+,["problem-1118-118384-pre"
+,"problem-1152-122269-pre"
+,"problem-1197-126327-pre"
+,"problem-1266-132593-pre"]
+,["problem-1469-145199-pre"
+,"problem-1514-147317-pre"
+,"problem-1587-150845-pre"
+,"problem-52-64053-pre"]
+,["problem-245-198739-pre"
+,"problem-427-310384-pre"
+,"problem-1408-912229-pre"]
+,["problem-1350-894716-pre"
+,"problem-1288-866452-pre"
+,"problem-1238-843534-pre"]
+,["problem-202-132796-pre"
+,"problem-273-176305-pre"
+,"problem-39-18060-pre"
+,"problem-161-48126-pre"]
+,["problem-193-53101-pre"
+,"problem-257-65132-pre"
+,"problem-372-47423-pre"]
+,["problem-783-84444-pre"
+,"problem-1064-113655-pre"
+,"problem-1340-137079-pre"
+,"problem-89-110973-pre"]
+,["problem-1778-993923-pre"
+,"problem-1642-153820-pre"
+,"problem-1695-155710-pre"]
+,["problem-225-57665-pre"
+,"problem-318-41628-pre"
+,"problem-707-78455-pre"]
+,["problem-1031-110968-pre"
+,"problem-1235-129634-pre"]
+,["problem-1184-816583-pre"
+,"problem-1158-802917-pre"
+,"problem-1102-780462-pre"]]

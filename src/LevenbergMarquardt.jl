@@ -1,6 +1,6 @@
 module LevenbergMarquardt
 
-using Krylov, BundleAdjustmentModels, Printf, Logging, NLPModels, LinearAlgebra, SolverCore
+using Krylov, BundleAdjustmentModels, Printf, NLPModels, LinearAlgebra
 using ReverseADNLSModels, ForwardDiff, ReverseDiff, SparseDiffTools
 
 include("LevenbergMarquardtUtils.jl")
@@ -11,7 +11,7 @@ include("ReverseADNLSfromBAM.jl")
 include("LevenbergMarquardtStatsAD.jl")
 include("LevenbergMarquardtSolverAD.jl")
 
-include("Partitions2.jl")
+include("Partitions.jl")
 
 include("LevenbergMarquardtAlgorithmAD.jl")
 include("LevenbergMarquardtTrustRegionAD.jl")

@@ -1,4 +1,11 @@
-export levenberg_marquardt_AD, levenberg_marquardt_AD!
+export levenberg_marquardt_AD, levenberg_marquardt_AD!, levenberg_marquardt_AD_BAM
+
+function levenberg_marquardt_AD_BAM(model; kwargs)
+  ADmodel = ADBundleAdjustmentModel(model)
+  solver = LMSolverAD(ADmodel)
+  levenberg_marquardt_AD!(solver, ADmodel; kwargs)
+  return solver.stats
+end
 
 """
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
@@ -15,25 +22,25 @@ Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
 function levenberg_marquardt_AD!(solver    :: LMSolverAD{T,S}, 
-                              model     :: AbstractNLSModel;
-                              λ         :: T = zero(T),
-                              η₁        :: T = eps(T)^(1/4), 
-                              η₂        :: T = T(0.99),
-                              σ₁        :: T = T(10.0), 
-                              σ₂        :: T = T(0.1),
-                              max_eval  :: Int = 10_000,
-                              λmin      :: T = T(1e-1),
-                              restol    :: T = T(eps(T)^(1/3)),
-                              atol      :: T = zero(T), 
-                              rtol      :: T = T(eps(T)^(1/3)),
-                              in_axtol  :: T = zero(T),
-                              in_btol   :: T = zero(T),
-                              in_atol   :: T = zero(T),
-                              in_rtol   :: T = zero(T),
-                              in_etol   :: T = zero(T),
-                              in_itmax  :: Int = 0,
-                              in_conlim :: T = 1/√eps(T),
-                              verbose   :: Bool = true) where {T, S}
+                                model     :: AbstractNLSModel;
+                                λ         :: T = zero(T),
+                                η₁        :: T = eps(T)^(1/4), 
+                                η₂        :: T = T(0.99),
+                                σ₁        :: T = T(10.0), 
+                                σ₂        :: T = T(0.1),
+                                max_eval  :: Int = 10_000,
+                                λmin      :: T = T(1e-1),
+                                restol    :: T = T(eps(T)^(1/3)),
+                                atol      :: T = zero(T), 
+                                rtol      :: T = T(eps(T)^(1/3)),
+                                in_axtol  :: T = zero(T),
+                                in_btol   :: T = zero(T),
+                                in_atol   :: T = zero(T),
+                                in_rtol   :: T = zero(T),
+                                in_etol   :: T = zero(T),
+                                in_itmax  :: Int = 0,
+                                in_conlim :: T = 1/√eps(T),
+                                verbose   :: Bool = true) where {T, S}
 
   # Set up the initial value of the residual and Jacobin at the starting point
   x, Fx, Fxp, xp, Fxm = model.meta.x0, solver.Fx, solver.Fxp, solver.xp, solver.Fxm
