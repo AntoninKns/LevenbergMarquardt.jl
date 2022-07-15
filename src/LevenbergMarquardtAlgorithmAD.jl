@@ -1,9 +1,9 @@
 export levenberg_marquardt_AD, levenberg_marquardt_AD!, levenberg_marquardt_AD_BAM
 
-function levenberg_marquardt_AD_BAM(model; kwargs)
+function levenberg_marquardt_AD_BAM(model; kwargs...)
   ADmodel = ADBundleAdjustmentModel(model)
   solver = LMSolverAD(ADmodel)
-  levenberg_marquardt_AD!(solver, ADmodel; kwargs)
+  levenberg_marquardt_AD!(solver, ADmodel; kwargs...)
   return solver.stats
 end
 
