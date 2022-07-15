@@ -1,4 +1,4 @@
-using SolverBenchmark, LevenbergMarquardt, BundleAdjustmentModels, Plots, Dates, DataFrames, JLD2
+using SolverBenchmark, LevenbergMarquardt, BundleAdjustmentModels, Plots, Dates, DataFrames, JLD2, Printf, NLPModels
 
 """
 Function that solves problems based on their partition number and the partition list and saves the stats in a JLD2 file.
@@ -9,7 +9,7 @@ function lm_distributed_benchmark(solvers :: Dict,
 
   problem_list = (BundleAdjustmentModel(problem) for problem in LevenbergMarquardt.partitions[partition_number])
 
-  stats = bmark_solvers(solvers, problem_list)
+  stats = bmark_solvers_lm(solvers, problem_list)
 
   stats_JLD2 = joinpath(directory, "JLD2_files", "Partition_" * string(partition_number) * "_stats_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".jld2")
 
@@ -31,10 +31,10 @@ function bmark_solvers_lm(solvers::Dict{Symbol, <:Any}, args...; kwargs...)
 end
 
 function solve_problems_lm(solver, problems; 
-                            solver_logger :: AbstractLogger = NullLogger(),
                             reset_problem :: Bool = true,
                             skipif :: Function = x -> false,
-                            prune :: Bool = true)
+                            prune :: Bool = true,
+                            kwargs...)
 
   f_counters = collect(fieldnames(Counters))
   fnls_counters = collect(fieldnames(NLSCounters))[2:end] # Excludes :counters
@@ -56,6 +56,9 @@ function solve_problems_lm(solver, problems;
   ]
 
   names = [
+    :name
+    :nvar
+    :nequ
     :status
     :rNorm
     :rNorm0
@@ -71,8 +74,6 @@ function solve_problems_lm(solver, problems;
   stats = DataFrame(names .=> [T[] for T in types])
 
   specific = Symbol[]
-
-  col_idx = indexin(colstats, names)
 
   first_problem = true
   for (id, problem) in enumerate(problems)
@@ -101,23 +102,9 @@ function solve_problems_lm(solver, problems;
       finalize(problem)
     else
       try
-        s = with_logger(solver_logger) do
-          solver(problem; kwargs...)
-        end
-        if first_problem
-          for (k, v) in s.solver_specific
-            if !(typeof(v) <: AbstractVector)
-              insertcols!(stats, ncol(stats) + 1, k => Vector{Union{typeof(v), Missing}}())
-              push!(specific, k)
-            end
-          end
+        s = solver(problem; kwargs...)
 
-          @info log_header(colstats, types[col_idx], hdr_override = info_hdr_override)
-
-          first_problem = false
-        end
-
-        @printf("| %17s | %6s | %6s | %14s | %8s | %8s | %8s | %8s |\n", "Name", "nvar", "nequ", "status", "rNorm0", "rNorm", "ArNorm0", "ArNorm")
+        @printf("| %17s | %6s | %6s |\n", "Name", "nvar", "nequ")
 
         push!(
           stats,
@@ -131,8 +118,8 @@ function solve_problems_lm(solver, problems;
             s.iter
             s.inner_iter
             s.elapsed_time
-            [getfield(s.counters.counters, f) for f in f_counters]
-            [getfield(s.counters, f) for f in fnls_counters]
+            [getfield(s.model.counters.counters, f) for f in f_counters]
+            [getfield(s.model.counters, f) for f in fnls_counters]
           ],
         )
       catch e
@@ -156,9 +143,7 @@ function solve_problems_lm(solver, problems;
         finalize(problem)
       end
     end
-    (skipthis && prune) || @printf("| %17s | %6d | %6d | %14s | %1.2e | %1.2e | %1.2e | %1.2e |\n", 
-                                    problem.meta.name, problem.meta.nvar, nequ, String(s.status), 
-                                    s.rNorm0, s.rNorm, s.ArNorm0, s.ArNorm)
+    (skipthis && prune) || @printf("| %17s | %6d | %6d |\n", problem.meta.name, problem.meta.nvar, nequ)
   end
   return stats
 end

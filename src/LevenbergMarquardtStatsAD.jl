@@ -3,10 +3,10 @@ Type for statistics returned by the LevenbergMarquardt solvers, the attributes a
   - model
   - status
   - solution
-  - rNorm
   - rNorm0
-  - ArNorm
+  - rNorm
   - ArNorm0
+  - ArNorm
   - iter
   - inner_iter
   - elapsed_time
@@ -15,10 +15,10 @@ mutable struct LMStatsAD{T,S}
   model :: AbstractNLSModel
   status :: Symbol
   solution :: S
-  rNorm :: T
   rNorm0 :: T
-  ArNorm :: T
+  rNorm :: T
   ArNorm0 :: T
+  ArNorm :: T
   iter :: Int
   inner_iter :: Int
   elapsed_time :: Float64
