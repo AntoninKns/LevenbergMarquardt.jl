@@ -1,4 +1,4 @@
-using SolverBenchmark, LevenbergMarquardt, BundleAdjustmentModels, Plots, Dates, DataFrames, JLD2, Printf, NLPModels
+using SolverBenchmark, LevenbergMarquardt, BundleAdjustmentModels, Plots, Dates, DataFrames, JLD2, Printf, NLPModels, Logging
 
 """
 Function that solves problems based on their partition number and the partition list and saves the stats in a JLD2 file.
@@ -30,11 +30,12 @@ function bmark_solvers_lm(solvers::Dict{Symbol, <:Any}, args...; kwargs...)
   return stats
 end
 
-function solve_problems_lm(solver, problems; 
-                            reset_problem :: Bool = true,
-                            skipif :: Function = x -> false,
-                            prune :: Bool = true,
-                            kwargs...)
+function solve_problems_lm(solver, problems;
+                          solver_logger :: AbstractLogger = NullLogger(), 
+                          reset_problem :: Bool = true,
+                          skipif :: Function = x -> false,
+                          prune :: Bool = true,
+                          kwargs...)
 
   f_counters = collect(fieldnames(Counters))
   fnls_counters = collect(fieldnames(NLSCounters))[2:end] # Excludes :counters
@@ -99,7 +100,9 @@ function solve_problems_lm(solver, problems;
       finalize(problem)
     else
       try
-        s = solver(problem; kwargs...)
+        s = with_logger(solver_logger) do
+          solver(problem; kwargs...)
+        end
 
         push!(
           stats,
