@@ -60,10 +60,10 @@ function solve_problems_lm(solver, problems;
     :nvar
     :nequ
     :status
-    :rNorm
     :rNorm0
-    :ArNorm
+    :rNorm
     :ArNorm0
+    :ArNorm
     :iter
     :inner_iter
     :elapsed_time
@@ -73,9 +73,6 @@ function solve_problems_lm(solver, problems;
 
   stats = DataFrame(names .=> [T[] for T in types])
 
-  specific = Symbol[]
-
-  first_problem = true
   for (id, problem) in enumerate(problems)
     if reset_problem
       reset!(problem)
@@ -103,8 +100,6 @@ function solve_problems_lm(solver, problems;
     else
       try
         s = solver(problem; kwargs...)
-
-        @printf("| %17s | %6s | %6s |\n", "Name", "nvar", "nequ")
 
         push!(
           stats,
@@ -143,15 +138,15 @@ function solve_problems_lm(solver, problems;
         finalize(problem)
       end
     end
-    (skipthis && prune) || @printf("| %17s | %6d | %6d |\n", problem.meta.name, problem.meta.nvar, nequ)
+    (skipthis && prune) || @printf("Above problem is %17s with nvar : %6d and nequ : %6d \n", problem.meta.name, problem.meta.nvar, nequ)
   end
   return stats
 end
 
 # Get the solver and partition number and launch the distributed benchmark
 function main(args)
-  solvers = Dict(:levenberg_marquardt_AD => model -> levenberg_marquardt_AD_BAM(model, in_rtol=1e-3),
-                :levenberg_marquardt => model -> levenberg_marquardt(model, in_rtol=1e-3)
+  solvers = Dict(:levenberg_marquardt_AD => model -> levenberg_marquardt_AD_BAM(model, in_rtol=1e-3, in_itmax=50, max_eval=10),
+                :levenberg_marquardt => model -> levenberg_marquardt(model, in_rtol=1e-3, in_itmax=50, max_eval=10)
                 )
 
   partition_number = parse(Int64, args[1])
