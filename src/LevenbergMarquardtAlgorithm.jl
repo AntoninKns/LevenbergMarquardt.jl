@@ -63,7 +63,9 @@ function levenberg_marquardt!(solver    :: LMSolver{T},
   small_residual = false
   tired = false
 
-  verbose && (levenberg_marquardt_log_header(model, λ, η₁, η₂, σ₁, σ₂, max_eval, λmin, restol, atol, rtol, in_rtol, in_itmax, in_conlim))
+  verbose && (levenberg_marquardt_log_header(model, λ, η₁, η₂, σ₁, σ₂, max_eval, 
+                                              λmin, restol, atol, rtol, in_rtol,
+                                              in_itmax, in_conlim))
 
   while !(optimal || small_residual || tired )
 
@@ -129,7 +131,10 @@ function levenberg_marquardt!(solver    :: LMSolver{T},
     iter += 1
     solver.stats.inner_iter += in_solver.stats.niter
     step_time = time()-start_step_time
-    verbose && (levenberg_marquardt_log_row(iter, (rNorm^2)/2, ArNorm, dNorm, λ, Ared, Pred, ρ, in_solver.stats.Acond, inner_status, in_solver.stats.niter, step_time, neval_jprod_residual(model)))
+    verbose && (levenberg_marquardt_log_row(iter, (rNorm^2)/2, ArNorm, dNorm, λ, Ared, 
+                                            Pred, ρ, in_solver.stats.Acond, inner_status, 
+                                            in_solver.stats.niter, step_time, 
+                                            neval_jprod_residual(model)))
 
     # Update stopping conditions
     optimal = ArNorm < optimal_cond

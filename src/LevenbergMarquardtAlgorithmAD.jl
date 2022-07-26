@@ -67,9 +67,13 @@ function levenberg_marquardt_AD!(solver    :: LMSolverAD{T,S},
   small_residual = false
   tired = false
   
-  verbose && (levenberg_marquardt_log_header(model))
+  verbose && (levenberg_marquardt_log_header(model, λ, η₁, η₂, σ₁, σ₂, max_eval, 
+                                              λmin, restol, atol, rtol, in_rtol, 
+                                              in_itmax, in_conlim))
 
   while !(optimal || small_residual || tired )
+
+    start_step_time = time()
 
     # Solve the subproblem
     Fxm .= Fx
@@ -125,7 +129,11 @@ function levenberg_marquardt_AD!(solver    :: LMSolverAD{T,S},
     verbose && (inner_status = change_stats(in_solver.stats.status))
     iter += 1
     solver.stats.inner_iter += in_solver.stats.niter
-    verbose && (levenberg_marquardt_log_row(iter, (rNorm^2)/2, ArNorm, dNorm, λ, Ared, Pred, ρ, inner_status, in_solver.stats.niter, neval_jprod_residual(model)))
+    step_time = time()-start_step_time
+    verbose && (levenberg_marquardt_log_row(iter, (rNorm^2)/2, ArNorm, dNorm, λ, Ared, 
+                                            Pred, ρ, in_solver.stats.Acond, inner_status, 
+                                            in_solver.stats.niter, step_time, 
+                                            neval_jprod_residual(model)))
 
     # Update stopping conditions
     optimal = ArNorm < optimal_cond
