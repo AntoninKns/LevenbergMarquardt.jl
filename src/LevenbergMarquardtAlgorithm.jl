@@ -147,6 +147,9 @@ function levenberg_marquardt!(solver    :: LMSolver{T},
   elapsed_time = time()-start_time
   solver.stats.iter = iter
   solver.stats.elapsed_time = elapsed_time
+  solver.stats.rNorm = rNorm
+  solver.stats.ArNorm = ArNorm
+  solver.stats.solution .= x
 
   # Update solver status
   if optimal
@@ -158,6 +161,7 @@ function levenberg_marquardt!(solver    :: LMSolver{T},
   else
     status = :unknown
   end
+  solver.stats.status = status
 
   return solver
 end
