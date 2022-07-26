@@ -40,8 +40,8 @@ function generate_stats(solvers :: AbstractVector,
   for name in keys(stats)
     open(joinpath(directory, "results", String(name) * "_stats_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".log"),"w") do io
       solver_df = stats[name]
-      pretty_latex_stats(io, solver_df[!, [:name, :neval_residual, :inner_iter, :neval_jprod_residual, :status, :objective, :dual_feas0, :dual_feas, :elapsed_time]])
-      pretty_stats(io, solver_df[!, [:name, :neval_residual, :inner_iter, :neval_jprod_residual, :status, :objective, :dual_feas0, :dual_feas, :elapsed_time]], tf=tf_markdown)
+      pretty_latex_stats(io, solver_df[!, [:name, :neval_residual, :inner_iter, :neval_jprod_residual, :status, :rNorm, :ArNorm0, :ArNorm, :elapsed_time]])
+      pretty_stats(io, solver_df[!, [:name, :neval_residual, :inner_iter, :neval_jprod_residual, :status, :rNorm, :ArNorm0, :ArNorm, :elapsed_time]], tf=tf_markdown)
     end
   end
 
@@ -53,7 +53,7 @@ function generate_stats(solvers :: AbstractVector,
 end
 
 # We choose the solvers
-solvers = [:levenberg_marquardt_1e3, :levenberg_marquardt_tr_1e3]
+solvers = [:levenberg_marquardt, :levenberg_marquardt_AD]
 
 # We define what a solved problem means
 solved(stats) = map(x -> x in (:first_order, :small_residual), stats.status)
