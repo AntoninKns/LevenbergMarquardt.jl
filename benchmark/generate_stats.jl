@@ -56,7 +56,7 @@ end
 solvers = [:levenberg_marquardt, :levenberg_marquardt_AD]
 
 # We define what a solved problem means
-solved(stats) = map(x -> x in (:first_order, :small_residual), stats.status)
+solved(stats) = map(x -> x in (:first_order, :small_residual, :max_iter), stats.status)
 
 # We define what we want to compare in the performance profile
 costnames = ["elapsed time", "num eval of residual", "num eval of jprod"]

@@ -24,7 +24,9 @@ docs/site/
 Manifest.toml
 
 # Results of benchmarks that don't need to be uploaded
-benchmark/JLD2_files/*
-benchmark/results/*
-log_error/*
-log_output/*
+benchmark_files/JLD2_files/*
+benchmark_files/results/*
+benchmark_files/log_error/*
+benchmark_files/log_output/*
+
+scripts/*

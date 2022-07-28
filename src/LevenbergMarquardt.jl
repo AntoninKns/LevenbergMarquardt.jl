@@ -7,18 +7,12 @@ using LinearOperators
 include("LevenbergMarquardtUtils.jl")
 include("LevenbergMarquardtStats.jl")
 include("LevenbergMarquardtSolver.jl")
+include("LevenbergMarquardtAlgorithmFunctions.jl")
 
-include("ReverseADNLSfromBAM.jl")
-include("LevenbergMarquardtStatsAD.jl")
-include("LevenbergMarquardtSolverAD.jl")
+include("temp/ReverseADNLSfromBAM.jl")
+include("temp/Partitions.jl")
+include("temp/LevenbergMarquardtPreconditioner.jl")
 
-include("Partitions.jl")
-
-include("LevenbergMarquardtPreconditioner.jl")
-
-include("LevenbergMarquardtAlgorithmAD.jl")
-include("LevenbergMarquardtTrustRegionAD.jl")
 include("LevenbergMarquardtAlgorithm.jl")
-include("LevenbergMarquardtTrustRegion.jl")
 
 end
