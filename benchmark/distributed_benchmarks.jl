@@ -11,7 +11,7 @@ function lm_distributed_benchmark(solvers :: Dict,
 
   stats = bmark_solvers_lm(solvers, problem_list)
 
-  stats_JLD2 = joinpath(directory, "JLD2_files", "Partition_" * string(partition_number) * "_stats_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".jld2")
+  stats_JLD2 = joinpath(directory, "benchmark_files", "JLD2_files", "Partition_" * string(partition_number) * "_stats_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".jld2")
 
   jldopen(stats_JLD2, "w") do file
     for (name, solver) in solvers
