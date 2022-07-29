@@ -148,8 +148,8 @@ end
 
 # Get the solver and partition number and launch the distributed benchmark
 function main(args)
-  solvers = Dict(:levenberg_marquardt_AD => model -> levenberg_marquardt_AD_BAM(model, in_rtol=1e-3, in_itmax=50, max_eval=10),
-                :levenberg_marquardt => model -> levenberg_marquardt(model, in_rtol=1e-3, in_itmax=50, max_eval=10)
+  solvers = Dict(:levenberg_marquardt_AD => model -> levenberg_marquardt_AD_BAM(model, in_rtol=1e-3, in_itmax=1, max_eval=1),
+                :levenberg_marquardt => model -> levenberg_marquardt(model, in_rtol=1e-3, in_itmax=1, max_eval=1)
                 )
 
   partition_number = parse(Int64, args[1])
