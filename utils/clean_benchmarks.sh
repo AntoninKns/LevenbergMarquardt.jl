@@ -1,5 +1,5 @@
 #!/bin/bash
 
-rm log_error/error*
-rm log_output/output*
-rm benchmark/JLD2_files/Partition*
+rm benchmark_files/log_error/error*
+rm benchmark_files/log_output/output*
+rm benchmark_files/JLD2_files/Partition*
