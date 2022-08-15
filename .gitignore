@@ -27,6 +27,7 @@ Manifest.toml
 benchmark_files/JLD2_files/Partition*
 benchmark_files/results/levenberg*
 benchmark_files/results/performance*
+benchmark_files/results/LM*
 benchmark_files/log_error/error*
 benchmark_files/log_output/output*
 benchmark_files/problem_logs/log*

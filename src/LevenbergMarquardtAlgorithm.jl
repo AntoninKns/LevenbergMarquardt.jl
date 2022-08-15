@@ -19,7 +19,7 @@ end
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S},
+function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
                               model     :: AbstractNLSModel;
                               TR        :: Bool = false,
                               λ         :: T = zero(T),
@@ -41,7 +41,7 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S},
                               in_itmax  :: Int = 0,
                               in_conlim :: T = 1/√eps(T),
                               verbose   :: Bool = true,
-                              logging   :: IO = stdout) where {T,S}
+                              logging   :: IO = stdout) where {T,S,ST}
 
   # Set up variables from the solver to avoid allocations
   x, Fx, Fxp, xp, Fxm = model.meta.x0, solver.Fx, solver.Fxp, solver.xp, solver.Fxm
@@ -51,7 +51,7 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S},
   # Set up the initial value of the residual and Jacobian at the starting point
   residual!(model, x, Fx)
 
-  Jx = set_jac_op_residual!(model, solver, T, S, x, Jv, Jtv)
+  Jx = set_jac_op_residual!(model, solver, T, S, ST, x, Jv, Jtv)
 
   # Calculate initiale rNorm and ArNorm values
   rNorm = rNorm0 = norm(Fx)
@@ -118,7 +118,7 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S},
       # If the step is good enough we accept it and Update
       # x, J(x), F(x), ‖F(x)‖ and ‖J(x)ᵀF(x)‖
       x .= xp
-      Jx = update_jac_op_residual!(model, solver, T, S, x, Jv, Jtv)
+      Jx = update_jac_op_residual!(model, solver, T, S, ST, x, Jv, Jtv)
       Fx .= Fxp
       rNorm = rNormp
       mul!(Jtu, Jx', Fx)

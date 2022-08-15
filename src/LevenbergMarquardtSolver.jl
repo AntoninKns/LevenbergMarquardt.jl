@@ -1,7 +1,7 @@
 export AbstractLMSolver, LMSolver, LMSolverAD
 
 "Abstract type for using Levenberg Marquardt solvers in-place"
-abstract type AbstractLMSolver{T,S} end
+abstract type AbstractLMSolver{T,S,ST} end
 
 """
 Type for storing the vectors required by the in-place version of LevenbergMarquardt.
@@ -9,7 +9,7 @@ The outer constructor
     solver = LMSolver(n, m, S)
 may be used in order to create these vectors.
 """
-mutable struct LMSolver{T,S} <: AbstractLMSolver{T,S}
+mutable struct LMSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
   x :: S
   Fx :: S
@@ -27,7 +27,7 @@ mutable struct LMSolver{T,S} <: AbstractLMSolver{T,S}
   Ju :: S
   Jtu :: S
 
-  in_solver :: KrylovSolver
+  in_solver :: ST
 
   stats :: LMStats{T,S}
 
@@ -57,9 +57,11 @@ mutable struct LMSolver{T,S} <: AbstractLMSolver{T,S}
 
     in_solver = LsmrSolver(m, n, S)
 
+    ST = typeof(in_solver)
+
     stats = LMStats(model, :unknown, similar(x), zero(T), zero(T), zero(T), zero(T), 0, 0, 0.)
 
-    solver = new{T,S}(x, Fx, Fxp, xp, Fxm, rows, cols, vals, Jv, Jtv, Ju, Jtu, in_solver, stats)
+    solver = new{T,S,ST}(x, Fx, Fxp, xp, Fxm, rows, cols, vals, Jv, Jtv, Ju, Jtu, in_solver, stats)
 
     return solver
   end
@@ -71,7 +73,7 @@ The outer constructor
     solver = LMSolverAD(n, m, S)
 may be used in order to create these vectors.
 """
-mutable struct LMSolverAD{T,S} <: AbstractLMSolver{T,S}
+mutable struct LMSolverAD{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
   x :: S
   Fx :: S
@@ -85,7 +87,7 @@ mutable struct LMSolverAD{T,S} <: AbstractLMSolver{T,S}
   Ju :: S
   Jtu :: S
 
-  in_solver :: KrylovSolver
+  in_solver :: ST
 
   stats :: LMStats{T,S}
 
@@ -111,9 +113,11 @@ mutable struct LMSolverAD{T,S} <: AbstractLMSolver{T,S}
 
     in_solver = LsmrSolver(m, n, S)
 
+    ST = typeof(in_solver)
+
     stats = LMStats{T,S}(model, :unknown, similar(x), zero(T), zero(T), zero(T), zero(T), 0, 0, 0.)
 
-    solver = new{T,S}(x, Fx, Fxp, xp, Fxm, Jv, Jtv, Ju, Jtu, in_solver, stats)
+    solver = new{T,S,ST}(x, Fx, Fxp, xp, Fxm, Jv, Jtv, Ju, Jtu, in_solver, stats)
 
     return solver
   end

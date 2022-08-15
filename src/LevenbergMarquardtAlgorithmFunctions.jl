@@ -33,8 +33,8 @@ end
 Set the first value of the linear operator for the Jacobian
 Works with sparse manually calculated jacobian or automatic differentiation
 """
-function set_jac_op_residual!(model, solver, T, S, x, Jv, Jtv)
-  if typeof(solver) == LMSolver{T, S}
+function set_jac_op_residual!(model, solver, T, S, ST, x, Jv, Jtv)
+  if typeof(solver) == LMSolver{T, S, ST}
     jac_structure_residual!(model, solver.rows, solver.cols)
     jac_coord_residual!(model, x, solver.vals)
     Jx = jac_op_residual!(model, solver.rows, solver.cols, solver.vals, Jv, Jtv)
@@ -48,8 +48,8 @@ end
 Update the linear operator for the jacobian
 Works with sparse manually calculated jacobian or automatic differentiation
 """
-function update_jac_op_residual!(model, solver, T, S, x, Jv, Jtv)
-  if typeof(solver) == LMSolver{T,S}
+function update_jac_op_residual!(model, solver, T, S, ST, x, Jv, Jtv)
+  if typeof(solver) == LMSolver{T,S,ST}
     jac_coord_residual!(model, x, solver.vals)
     Jx = jac_op_residual!(model, solver.rows, solver.cols, solver.vals, Jv, Jtv)
   else

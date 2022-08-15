@@ -16,11 +16,11 @@ function generate_stats(solvers :: AbstractVector,
     stats[name] = DataFrame()
   end
   
-  filenames = readdir(joinpath(directory, "JLD2_files/"))
+  filenames = readdir(joinpath(directory, "..", "benchmark_files", "JLD2_files/"))
   
   # We open the JLD2 files and store the data in the stats dictionary
-  for filename in filenames
-    file = jldopen(joinpath(directory, "JLD2_files/", filename), "r")
+  for filename in filenames[2:end]
+    file = jldopen(joinpath(directory, "..", "benchmark_files", "JLD2_files/", filename), "r")
     for name in solvers
       if String(name) in keys(file)
         solver_stats = file[String(name)]
@@ -38,7 +38,7 @@ function generate_stats(solvers :: AbstractVector,
 
   # We generate the stats table out of the stats dictionary
   for name in keys(stats)
-    open(joinpath(directory, "results", String(name) * "_stats_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".log"),"w") do io
+    open(joinpath(directory, "..", "benchmark_files", "results", String(name) * "_stats_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".log"),"w") do io
       solver_df = stats[name]
       pretty_latex_stats(io, solver_df[!, [:name, :neval_residual, :inner_iter, :neval_jprod_residual, :status, :rNorm, :ArNorm0, :ArNorm, :elapsed_time]])
       pretty_stats(io, solver_df[!, [:name, :neval_residual, :inner_iter, :neval_jprod_residual, :status, :rNorm, :ArNorm0, :ArNorm, :elapsed_time]], tf=tf_markdown)
@@ -48,12 +48,12 @@ function generate_stats(solvers :: AbstractVector,
   # We generate the performance profile out of the stats dictionary
   profile_solvers(stats, costs, costnames)
 
-  savefig(joinpath(directory, "results", "performance_profile_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".pdf"))
+  savefig(joinpath(directory, "..", "benchmark_files", "results", "performance_profile_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".pdf"))
 
 end
 
 # We choose the solvers
-solvers = [:levenberg_marquardt, :levenberg_marquardt_AD]
+solvers = [:LM, :LM_TR]
 
 # We define what a solved problem means
 solved(stats) = map(x -> x in (:first_order, :small_residual, :max_iter), stats.status)
