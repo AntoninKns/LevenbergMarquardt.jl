@@ -40,7 +40,8 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S},
                               in_etol   :: T = zero(T),
                               in_itmax  :: Int = 0,
                               in_conlim :: T = 1/√eps(T),
-                              verbose   :: Bool = true) where {T,S}
+                              verbose   :: Bool = true,
+                              logging   :: IO = stdout) where {T,S}
 
   # Set up variables from the solver to avoid allocations
   x, Fx, Fxp, xp, Fxm = model.meta.x0, solver.Fx, solver.Fxp, solver.xp, solver.Fxm
@@ -71,7 +72,7 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S},
   tired = false
 
   # Header log line
-  verbose && (levenberg_marquardt_log_header(model, TR, param, η₁, η₂, σ₁, σ₂, max_eval,
+  verbose && (levenberg_marquardt_log_header(logging, model, TR, param, η₁, η₂, σ₁, σ₂, max_eval,
                                               λmin, restol, atol, rtol, in_rtol,
                                               in_itmax, in_conlim))
 
@@ -110,6 +111,7 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S},
       # If the quality of the step is under a certain threshold
       # Adapt λ or Δ to ensure a better next step
       param = bad_step_update!(param, TR, σ₁, λmin)
+      in_rtol *= 3
 
     else
 
@@ -127,6 +129,7 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S},
         # If the quality of the step is above a certain threshold
         # Loosen λ or Δ to try to find a bigger step
         param = very_good_step_update!(param, σ₂)
+        in_rtol /= 3
       end
       
       # In certains versions of Levenberg Marquardt
@@ -139,10 +142,11 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S},
     iter += 1
     solver.stats.inner_iter += in_solver.stats.niter
     step_time = time()-start_step_time
-    verbose && (levenberg_marquardt_log_row(iter, (rNorm^2)/2, ArNorm, dNorm, param, Ared, 
+    verbose && (levenberg_marquardt_log_row(logging, iter, (rNorm^2)/2, ArNorm, dNorm, param, Ared, 
                                             Pred, ρ, in_solver.stats.Acond, inner_status, 
                                             in_solver.stats.niter, step_time, 
                                             neval_jprod_residual(model)))
+    (logging != stdout) && flush(logging)
 
     # Update stopping conditions
     optimal = ArNorm < optimal_cond

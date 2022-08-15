@@ -29,5 +29,6 @@ benchmark_files/results/levenberg*
 benchmark_files/results/performance*
 benchmark_files/log_error/error*
 benchmark_files/log_output/output*
+benchmark_files/problem_logs/log*
 
 scripts/*

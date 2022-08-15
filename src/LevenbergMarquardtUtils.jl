@@ -27,26 +27,26 @@ end
 """
 Header of Levenberg Marquardt logs
 """
-function levenberg_marquardt_log_header(model, TR, param, η₁, η₂, σ₁, σ₂, max_eval, λmin, restol, atol, rtol, in_rtol, in_itmax, in_conlim)
-  @printf("Solving %s with %d equations and %d variables\n\n", model.meta.name, model.nls_meta.nequ, model.meta.nvar)
-  @printf("Parameters of the solver :\n")
+function levenberg_marquardt_log_header(logging, model, TR, param, η₁, η₂, σ₁, σ₂, max_eval, λmin, restol, atol, rtol, in_rtol, in_itmax, in_conlim)
+  @printf(logging, "Solving %s with %d equations and %d variables\n\n", model.meta.name, model.nls_meta.nequ, model.meta.nvar)
+  @printf(logging, "Parameters of the solver :\n")
   TR ? param_string = "Δ" : param_string = "λ" 
-  @printf("| %1s        : %1.2e | η₁       : %1.2e | η₂        : %1.2e | σ₁   : %1.2e | σ₂   : %1.2e |", param_string, param, η₁, η₂, σ₁, σ₂)
+  @printf(logging, "| %1s        : %1.2e | η₁       : %1.2e | η₂        : %1.2e | σ₁   : %1.2e | σ₂   : %1.2e |", param_string, param, η₁, η₂, σ₁, σ₂)
   if TR
-    @printf("\n")
+    @printf(logging, "\n")
   else
-    @printf(" λmin     : %1.2e |\n", λmin)
+    @printf(logging, " λmin     : %1.2e |\n", λmin)
   end
-  @printf("| max_eval :   %6d | restol   : %1.2e | atol      : %1.2e | rtol : %1.2e |\n", max_eval, restol, atol, rtol)
-  @printf("| in_rtol  : %1.2e | in_itmax :   %6d | in_conlim : %1.2e |\n\n", in_rtol, in_itmax, in_conlim)
-  @printf("|---------------------------------------------------------------------------------------------------------------|\n")
-  @printf("| %4s %8s %8s %8s %8s %9s %9s %9s %8s %4s %6s %8s %8s |\n", "iter", "‖F(x)‖", "‖J'F‖", "‖d‖", param_string, "Ared", "Pred", "ρ", "Jcond", "sub", "sub-it", "sub-time", "jprod")
-  @printf("|---------------------------------------------------------------------------------------------------------------|\n")
+  @printf(logging, "| max_eval :   %6d | restol   : %1.2e | atol      : %1.2e | rtol : %1.2e |\n", max_eval, restol, atol, rtol)
+  @printf(logging, "| in_rtol  : %1.2e | in_itmax :   %6d | in_conlim : %1.2e |\n\n", in_rtol, in_itmax, in_conlim)
+  @printf(logging, "|---------------------------------------------------------------------------------------------------------------|\n")
+  @printf(logging, "| %4s %8s %8s %8s %8s %9s %9s %9s %8s %4s %6s %8s %8s |\n", "iter", "‖F(x)‖", "‖J'F‖", "‖d‖", param_string, "Ared", "Pred", "ρ", "Jcond", "sub", "sub-it", "sub-time", "jprod")
+  @printf(logging, "|---------------------------------------------------------------------------------------------------------------|\n")
 end
 
 """
 Row of Levenberg Marquardt logs
 """
-function levenberg_marquardt_log_row(iter, rNorm, ArNorm, dNorm, param, Ared, Pred, ρ, Jcond, inner_status, inner_iter, step_time, jprod)
-  @printf("| %4d %1.2e %1.2e %1.2e %1.2e % 1.2e % 1.2e % 1.2e %1.2e %4s %6d %1.2e %8d |\n", iter, rNorm, ArNorm, dNorm, param, Ared, Pred, ρ, Jcond, inner_status, inner_iter, step_time, jprod)
+function levenberg_marquardt_log_row(logging, iter, rNorm, ArNorm, dNorm, param, Ared, Pred, ρ, Jcond, inner_status, inner_iter, step_time, jprod)
+  @printf(logging, "| %4d %1.2e %1.2e %1.2e %1.2e % 1.2e % 1.2e % 1.2e %1.2e %4s %6d %1.2e %8d |\n", iter, rNorm, ArNorm, dNorm, param, Ared, Pred, ρ, Jcond, inner_status, inner_iter, step_time, jprod)
 end

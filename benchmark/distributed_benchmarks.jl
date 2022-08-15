@@ -9,9 +9,9 @@ function lm_distributed_benchmark(solvers :: Dict,
 
   problem_list = (BundleAdjustmentModel(problem) for problem in LevenbergMarquardt.partitions[partition_number])
 
-  stats = bmark_solvers_lm(solvers, problem_list)
+  stats = bmark_solvers_lm(solvers, problem_list, directory)
 
-  stats_JLD2 = joinpath(directory, "benchmark_files", "JLD2_files", "Partition_" * string(partition_number) * "_stats_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".jld2")
+  stats_JLD2 = joinpath(directory, "..", "benchmark_files", "JLD2_files", "Partition_" * string(partition_number) * "_stats_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".jld2")
 
   jldopen(stats_JLD2, "w") do file
     for (name, solver) in solvers
@@ -21,21 +21,20 @@ function lm_distributed_benchmark(solvers :: Dict,
 
 end
 
-function bmark_solvers_lm(solvers::Dict{Symbol, <:Any}, args...; kwargs...)
+function bmark_solvers_lm(solvers::Dict{Symbol, <:Any}, args...)
   stats = Dict{Symbol, DataFrame}()
   for (name, solver) in solvers
     @debug "running" name solver
-    stats[name] = solve_problems_lm(solver, args...; kwargs...)
+    stats[name] = solve_problems_lm(solver, args...)
   end
   return stats
 end
 
-function solve_problems_lm(solver, problems;
+function solve_problems_lm(solver, problems, directory;
                           solver_logger :: AbstractLogger = NullLogger(), 
                           reset_problem :: Bool = true,
                           skipif :: Function = x -> false,
-                          prune :: Bool = true,
-                          kwargs...)
+                          prune :: Bool = true)
 
   f_counters = collect(fieldnames(Counters))
   fnls_counters = collect(fieldnames(NLSCounters))[2:end] # Excludes :counters
@@ -100,9 +99,10 @@ function solve_problems_lm(solver, problems;
       finalize(problem)
     else
       try
-        s = with_logger(solver_logger) do
-          solver(problem; kwargs...)
-        end
+        io = open(joinpath(directory, "..", "benchmark_files", "problem_logs", "log_" * problem.meta.name * "_" * Dates.format(now(), DateFormat("yyyymmddHMS")) * ".txt"), "w+")
+        s = solver(problem, io)
+        flush(io)
+        close(io)
 
         push!(
           stats,
@@ -141,14 +141,15 @@ function solve_problems_lm(solver, problems;
         finalize(problem)
       end
     end
-    (skipthis && prune) || @printf("Above problem is %17s with nvar : %6d and nequ : %6d \n", problem.meta.name, problem.meta.nvar, nequ)
+    (skipthis && prune) || @printf("Problem %17s with nvar : %6d and nequ : %6d \n", problem.meta.name, problem.meta.nvar, nequ)
   end
   return stats
 end
 
 # Get the solver and partition number and launch the distributed benchmark
 function main(args)
-  solvers = Dict(:levenberg_marquardt => model -> levenberg_marquardt(model, in_rtol=1e-3, in_itmax=1, max_eval=1)
+  solvers = Dict(:LM => (model, io) -> levenberg_marquardt(model, max_eval = 10, in_itmax = 50, logging = io),
+                 :LM_TR => (model, io) -> levenberg_marquardt(model, TR=true, max_eval = 10, in_itmax = 50, logging = io)
                 )
 
   partition_number = parse(Int64, args[1])
