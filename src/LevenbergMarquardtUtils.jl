@@ -27,7 +27,7 @@ end
 """
 Header of Levenberg Marquardt logs
 """
-function levenberg_marquardt_log_header(logging, model, TR, param, η₁, η₂, σ₁, σ₂, max_eval, λmin, restol, atol, rtol, in_rtol, in_itmax, in_conlim)
+function levenberg_marquardt_log_header(logging, model, TR, param, η₁, η₂, σ₁, σ₂, max_eval, λmin, restol, res_rtol, atol, rtol, in_rtol, in_itmax, in_conlim)
   @printf(logging, "Solving %s with %d equations and %d variables\n\n", model.meta.name, model.nls_meta.nequ, model.meta.nvar)
   @printf(logging, "Parameters of the solver :\n")
   TR ? param_string = "Δ" : param_string = "λ" 
@@ -37,7 +37,7 @@ function levenberg_marquardt_log_header(logging, model, TR, param, η₁, η₂,
   else
     @printf(logging, " λmin     : %1.2e |\n", λmin)
   end
-  @printf(logging, "| max_eval :   %6d | restol   : %1.2e | atol      : %1.2e | rtol : %1.2e |\n", max_eval, restol, atol, rtol)
+  @printf(logging, "| max_eval :   %6d | restol   : %1.2e | res_rtol  : %1.2e | atol : %1.2e | rtol : %1.2e |\n", max_eval, restol, res_rtol, atol, rtol)
   @printf(logging, "| in_rtol  : %1.2e | in_itmax :   %6d | in_conlim : %1.2e |\n\n", in_rtol, in_itmax, in_conlim)
   @printf(logging, "|---------------------------------------------------------------------------------------------------------------|\n")
   @printf(logging, "| %4s %8s %8s %8s %8s %9s %9s %9s %8s %4s %6s %8s %8s |\n", "iter", "‖F(x)‖", "‖J'F‖", "‖d‖", param_string, "Ared", "Pred", "ρ", "Jcond", "sub", "sub-it", "sub-time", "jprod")

@@ -3,6 +3,7 @@ module LevenbergMarquardt
 using Krylov, BundleAdjustmentModels, Printf, NLPModels, LinearAlgebra
 using ReverseADNLSModels, ForwardDiff, ReverseDiff, SparseDiffTools
 using LinearOperators
+using SparseArrays
 
 include("LevenbergMarquardtUtils.jl")
 include("LevenbergMarquardtStats.jl")
@@ -14,5 +15,6 @@ include("temp/Partitions.jl")
 include("temp/LevenbergMarquardtPreconditioner.jl")
 
 include("LevenbergMarquardtAlgorithm.jl")
+include("LevenbergMarquardtAlgorithmFacto.jl")
 
 end

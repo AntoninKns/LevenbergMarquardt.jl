@@ -148,8 +148,7 @@ end
 
 # Get the solver and partition number and launch the distributed benchmark
 function main(args)
-  solvers = Dict(:LM => (model, io) -> levenberg_marquardt(model, max_eval = 10, in_itmax = 50, logging = io),
-                 :LM_TR => (model, io) -> levenberg_marquardt(model, TR=true, max_eval = 10, in_itmax = 50, logging = io)
+  solvers = Dict(:LM_facto => (model, io) -> levenberg_marquardt_facto(model, logging = io),
                 )
 
   partition_number = parse(Int64, args[1])
