@@ -24,7 +24,7 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
                               TR        :: Bool = false,
                               λ         :: T = zero(T),
                               Δ         :: T = T(1e4),
-                              η₁        :: T = eps(T)^(1/4),
+                              η₁        :: T = T(eps(T)^(1/4)),
                               η₂        :: T = T(0.99),
                               σ₁        :: T = T(10.0),
                               σ₂        :: T = T(0.1),
@@ -155,6 +155,10 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
     optimal = ArNorm < optimal_cond
     tired = neval_residual(model) > max_eval
     small_residual = rNorm < optimal_res
+
+    println(typeof(x))
+    println(typeof(Jx))
+    println(typeof(Fx))
 
   end
 
