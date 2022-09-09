@@ -4,6 +4,7 @@ using Krylov, BundleAdjustmentModels, Printf, NLPModels, LinearAlgebra
 using ReverseADNLSModels, ForwardDiff, ReverseDiff, SparseDiffTools
 using LinearOperators
 using SparseArrays
+using LDLFactorizations
 
 include("LevenbergMarquardtUtils.jl")
 include("LevenbergMarquardtStats.jl")
@@ -16,5 +17,6 @@ include("temp/LevenbergMarquardtPreconditioner.jl")
 
 include("LevenbergMarquardtAlgorithm.jl")
 include("LevenbergMarquardtAlgorithmFacto.jl")
+include("LevenbergMarquardtAlgorithmFactoLDL.jl")
 
 end
