@@ -53,7 +53,7 @@ function generate_stats(solvers :: AbstractVector,
 end
 
 # We choose the solvers
-solvers = [:LM, :LM_TR, :LM_facto]
+solvers = [:LM_facto]
 
 # We define what a solved problem means
 solved(stats) = map(x -> x in (:first_order, :small_residual), stats.status)

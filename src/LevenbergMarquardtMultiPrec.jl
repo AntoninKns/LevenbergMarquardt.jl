@@ -1,25 +1,27 @@
-export levenberg_marquardt, levenberg_marquardt!
+export levenberg_marquardt_mp, levenberg_marquardt_mp!
 
 """
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt(model; AD = false, kwargs...)
-  # Adapting the solver depending on automatic differentiation or not
-  if AD
-    solver = LMSolverAD(model)
-  else
-    solver = LMSolver(model)
-  end
-  levenberg_marquardt!(solver, model; kwargs...)
-  return solver.stats
+function levenberg_marquardt_mp(model, new_type; kwargs...)
+  println("coucou")
+  solver = LMSolver(model)
+  println("coucou2")
+  levenberg_marquardt_mp!(solver, model; kwargs...)
+  println(typeof(model))
+  new_type_model = convert_type(new_type, model)
+  # new_type_model = model
+  new_type_solver = LMSolver(new_type_model)
+  levenberg_marquardt_mp!(new_type_solver, new_type_model; kwargs...)
+  return new_type_solver.stats
 end
 
 """
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
+function levenberg_marquardt_mp!(solver    :: AbstractLMSolver{T,S,ST},
                               model     :: AbstractNLSModel;
                               TR        :: Bool = false,
                               λ         :: T = zero(T),

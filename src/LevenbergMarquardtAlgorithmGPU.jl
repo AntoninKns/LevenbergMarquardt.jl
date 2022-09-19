@@ -1,17 +1,12 @@
-export levenberg_marquardt, levenberg_marquardt!
+export levenberg_marquardtGPU, levenberg_marquardtGPU!
 
 """
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt(model; AD = false, kwargs...)
-  # Adapting the solver depending on automatic differentiation or not
-  if AD
-    solver = LMSolverAD(model)
-  else
-    solver = LMSolver(model)
-  end
-  levenberg_marquardt!(solver, model; kwargs...)
+function levenberg_marquardtGPU(model; kwargs...)
+  solver = GPUSolver(model)
+  levenberg_marquardtGPU!(solver, model; kwargs...)
   return solver.stats
 end
 
@@ -19,7 +14,7 @@ end
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
+function levenberg_marquardtGPU!(solver    :: AbstractLMSolver{T,S,ST},
                               model     :: AbstractNLSModel;
                               TR        :: Bool = false,
                               λ         :: T = zero(T),
@@ -45,14 +40,18 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
                               logging   :: IO = stdout) where {T,S,ST}
 
   # Set up variables from the solver to avoid allocations
-  x, Fx, Fxp, xp, Fxm = model.meta.x0, solver.Fx, solver.Fxp, solver.xp, solver.Fxm
+  x, Fx, Fxp, xp, d = model.meta.x0, solver.Fx, solver.Fxp, solver.xp, solver.d
   Jv, Jtv, Ju, Jtu = solver.Jv, solver.Jtv, solver.Ju, solver.Jtu
+  #GPUin_solver
   in_solver = solver.in_solver
 
-  # Set up the initial value of the residual and Jacobian at the starting point
-  residual!(model, x, Fx)
+  GPUFx, GPUFxp, GPUFxm, GPUd = solver.GPUFx, solver.GPUFxp, solver.GPUFxm, solver.GPUd
+  GPUJv, GPUJtv = solver.GPUJv, solver.GPUJtv
 
-  Jx = set_jac_op_residual!(model, solver, T, S, ST, x, Jv, Jtv)
+  # Set up the initial value of the residual and Jacobian at the starting point
+  residualGPU!(model, x, Fx, GPUFx)
+
+  Jx, GPUJx = set_jac_op_residualGPU!(model, solver, x, Jv, Jtv, GPUJv, GPUJtv)
 
   # Calculate initiale rNorm and ArNorm values
   rNorm = rNorm0 = norm(Fx)
@@ -87,17 +86,18 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
     start_step_time = time()
 
     # Solve the subproblem min ‖Jx*d + Fx‖^2
-    Fxm .= Fx
-    Fxm .*= -1
-    in_solver = solve_sub_problem!(in_solver, Jx, Fxm, TR, param,
+    GPUFxm .= GPUFx
+    GPUFxm .*= -1
+    in_solver = solve_sub_problem!(in_solver, GPUJx, GPUFxm, TR, param,
                                   in_axtol, in_btol, in_atol, in_rtol,
                                   in_etol, in_itmax, in_conlim)
 
     # Calculate ‖d‖, xk+1, F(xk+1) and ‖F(xk+1)‖
-    d = in_solver.x
+    GPUd = in_solver.x
+    copyto!(d, GPUd)
     dNorm = in_solver.stats.xNorm
     xp .= x .+ d
-    Fxp = residual!(model, xp, Fxp)
+    residualGPU!(model, xp, Fxp, GPUFxp)
     rNormp = norm(Fxp)
 
     # Test the quality of the step 
@@ -122,8 +122,9 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
       # If the step is good enough we accept it and Update
       # x, J(x), F(x), ‖F(x)‖ and ‖J(x)ᵀF(x)‖
       x .= xp
-      Jx = update_jac_op_residual!(model, solver, T, S, ST, x, Jv, Jtv)
+      Jx, GPUJx = update_jac_op_residualGPU!(model, solver, x, Jv, Jtv, GPUJv, GPUJtv)
       Fx .= Fxp
+      GPUFx .= GPUFxp
       rNorm = rNormp
       mul!(Jtu, Jx', Fx)
       ArNorm = norm(Jtu)

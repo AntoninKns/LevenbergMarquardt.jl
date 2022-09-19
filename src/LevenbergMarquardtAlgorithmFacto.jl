@@ -120,7 +120,7 @@ function levenberg_marquardt_facto!(solver    :: AbstractLMSolver{T,S,ST},
     @views Ju .= Ju .+ Fx[1:m]
     normJu = norm(Ju)
     rNorm² = rNorm^2
-    Pred = (rNorm² - (normJu^2 + λ^2*dNorm^2))/2
+    Pred = (rNorm² - (normJu^2 + param^2*dNorm^2))/2
     Ared = (rNorm² - rNormp^2)/2
     ρ = Ared/Pred
 

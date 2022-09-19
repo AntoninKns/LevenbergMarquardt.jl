@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [deps]
 BundleAdjustmentModels = "0bf3e898-7c79-4b38-9ca6-2d9cc6573905"
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"

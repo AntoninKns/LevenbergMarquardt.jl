@@ -20,7 +20,7 @@ function levenberg_marquardt_LDL!(solver    :: AbstractLMSolver{T,S,ST},
                               TR        :: Bool = false,
                               λ         :: T = T(1.),
                               Δ         :: T = T(1e4),
-                              η₁        :: T = eps(T)^(1/4),
+                              η₁        :: T = T(eps(T)^(1/4)),
                               η₂        :: T = T(0.99),
                               σ₁        :: T = T(10.0),
                               σ₂        :: T = T(0.1),
@@ -117,10 +117,15 @@ function levenberg_marquardt_LDL!(solver    :: AbstractLMSolver{T,S,ST},
     # ρ = (‖F(xk)‖² - ‖F(xk+1)‖²) / (‖F(xk)‖² - ‖J(xk)*d + F(xk)‖² - λ‖d‖²)
     @views fill!(d[1:m], zero(T))
     @views mul!(Ju, A, d)
-    @views Ju[m+1:m+n] .= Ju[m+1:m+n] .+ Fx[1:m]
-    normJu = norm(Ju[m+1:m+n])
+    @views Ju[1:m] .= Ju[1:m] .+ Fx[1:m]
+    normJu = norm(Ju[1:m])
     rNorm² = rNorm^2
-    Pred = (rNorm² - (normJu^2 + λ^2*dNorm^2))/2
+#=     println(rNorm²)
+    println(rNormp)
+    println(normJu)
+    println(dNorm)
+    println(param) =#
+    Pred = (rNorm² - (normJu^2 + param^2*dNorm^2))/2
     Ared = (rNorm² - rNormp^2)/2
     ρ = Ared/Pred
 
@@ -130,7 +135,7 @@ function levenberg_marquardt_LDL!(solver    :: AbstractLMSolver{T,S,ST},
       # If the quality of the step is under a certain threshold
       # Adapt λ or Δ to ensure a better next step
       param = bad_step_update!(param, true, σ₁, λmin)
-      @views fill!(solver.vals[m+nnzj+1:m+nnzj+n], -λ)
+      @views fill!(solver.vals[m+nnzj+1:m+nnzj+n], -param)
       A = sparse(solver.rows, solver.cols, solver.vals)
 
     else
