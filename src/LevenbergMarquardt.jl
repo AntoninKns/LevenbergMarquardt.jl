@@ -7,20 +7,21 @@ using SparseArrays
 using LDLFactorizations
 using CUDA, CUDA.CUSPARSE
 
-include("LevenbergMarquardtUtils.jl")
-include("LevenbergMarquardtStats.jl")
-include("LevenbergMarquardtSolver.jl")
-include("LevenbergMarquardtAlgorithmFunctions.jl")
-include("LevenbergMarquardtAlgorithmGPUFunctions.jl")
+include("LMUtils.jl")
+include("LMStats.jl")
+include("LMSolver.jl")
+include("LMFunctions.jl")
+include("LMGPUFunctions.jl")
+include("LMMPFunctions.jl")
 
 include("temp/ReverseADNLSfromBAM.jl")
 include("temp/Partitions.jl")
 include("temp/LevenbergMarquardtPreconditioner.jl")
 
-include("LevenbergMarquardtAlgorithm.jl")
-include("LevenbergMarquardtAlgorithmFacto.jl")
-include("LevenbergMarquardtAlgorithmFactoLDL.jl")
-include("LevenbergMarquardtMultiPrec.jl")
-include("LevenbergMarquardtAlgorithmGPU.jl")
+include("LMAlgorithm.jl")
+include("LMAlgorithmFacto.jl")
+include("LMAlgorithmLDL.jl")
+include("LMAlgorithmMP.jl")
+include("LMAlgorithmGPU.jl")
 
 end

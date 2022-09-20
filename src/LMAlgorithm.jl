@@ -45,9 +45,10 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
                               logging   :: IO = stdout) where {T,S,ST}
 
   # Set up variables from the solver to avoid allocations
-  x, Fx, Fxp, xp, Fxm = model.meta.x0, solver.Fx, solver.Fxp, solver.xp, solver.Fxm
+  x, Fx, Fxp, xp, Fxm = solver.x, solver.Fx, solver.Fxp, solver.xp, solver.Fxm
   Jv, Jtv, Ju, Jtu = solver.Jv, solver.Jtv, solver.Ju, solver.Jtu
   in_solver = solver.in_solver
+  x .= model.meta.x0
 
   # Set up the initial value of the residual and Jacobian at the starting point
   residual!(model, x, Fx)
@@ -77,7 +78,7 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
   verbose && (levenberg_marquardt_log_header(logging, model, TR, param, η₁, η₂, σ₁, σ₂, max_eval,
                                               λmin, restol, res_rtol, atol, rtol, in_rtol,
                                               in_itmax, in_conlim))
-  verbose && (levenberg_marquardt_log_row(logging, iter, (rNorm^2)/2, ArNorm, zero(T), param, zero(T), 
+  verbose && (levenberg_marquardt_log_row(logging, iter, rNorm, ArNorm, zero(T), param, zero(T), 
                                           zero(T), zero(T), zero(T), "null", 0, zero(T), 
                                           neval_jprod_residual(model)))
 
@@ -99,6 +100,9 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
     xp .= x .+ d
     Fxp = residual!(model, xp, Fxp)
     rNormp = norm(Fxp)
+
+    println(dNorm)
+    println(rNormp)
 
     # Test the quality of the step 
     # ρ = (‖F(xk)‖² - ‖F(xk+1)‖²) / (‖F(xk)‖² - ‖J(xk)*d + F(xk)‖² - λ‖d‖²)
@@ -145,7 +149,7 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
     iter += 1
     solver.stats.inner_iter += in_solver.stats.niter
     step_time = time()-start_step_time
-    verbose && (levenberg_marquardt_log_row(logging, iter, (rNorm^2)/2, ArNorm, dNorm, param, Ared, 
+    verbose && (levenberg_marquardt_log_row(logging, iter, rNorm, ArNorm, dNorm, param, Ared, 
                                             Pred, ρ, in_solver.stats.Acond, inner_status, 
                                             in_solver.stats.niter, step_time, 
                                             neval_jprod_residual(model)))

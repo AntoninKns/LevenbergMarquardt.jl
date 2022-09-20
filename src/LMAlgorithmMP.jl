@@ -1,19 +1,15 @@
-export levenberg_marquardt_mp, levenberg_marquardt_mp!
+export levenberg_marquardt_mp_naive, levenberg_marquardt_mp, levenberg_marquardt_mp!
 
 """
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt_mp(model, new_type; kwargs...)
-  println("coucou")
+function levenberg_marquardt_mp_naive(model, new_type; kwargs...)
   solver = LMSolver(model)
-  println("coucou2")
-  levenberg_marquardt_mp!(solver, model; kwargs...)
-  println(typeof(model))
+  levenberg_marquardt!(solver, model; kwargs...)
   new_type_model = convert_type(new_type, model)
-  # new_type_model = model
   new_type_solver = LMSolver(new_type_model)
-  levenberg_marquardt_mp!(new_type_solver, new_type_model; kwargs...)
+  levenberg_marquardt!(new_type_solver, new_type_model; kwargs...)
   return new_type_solver.stats
 end
 
@@ -21,7 +17,17 @@ end
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt_mp!(solver    :: AbstractLMSolver{T,S,ST},
+function levenberg_marquardt_mp(model; F32=false, F64=true, kwargs...)
+  meta_solver = LMMPSolver(model; F32=F32, F64=F64)
+  levenberg_marquardt_mp!(meta_solver, model; kwargs...)
+  return meta_solver.F64Solver.stats
+end
+
+"""
+Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
+LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
+"""
+function levenberg_marquardt_mp!(meta_solver    :: LMMPSolver{T,S,ST},
                               model     :: AbstractNLSModel;
                               TR        :: Bool = false,
                               λ         :: T = zero(T),
@@ -47,9 +53,10 @@ function levenberg_marquardt_mp!(solver    :: AbstractLMSolver{T,S,ST},
                               logging   :: IO = stdout) where {T,S,ST}
 
   # Set up variables from the solver to avoid allocations
-  x, Fx, Fxp, xp, Fxm = model.meta.x0, solver.Fx, solver.Fxp, solver.xp, solver.Fxm
+  solver = meta_solver.F64Solver
+  x, Fx, Fxp, xp, Fxm = solver.x, solver.Fx, solver.Fxp, solver.xp, solver.Fxm
   Jv, Jtv, Ju, Jtu = solver.Jv, solver.Jtv, solver.Ju, solver.Jtu
-  in_solver = solver.in_solver
+  x .= model.meta.x0
 
   # Set up the initial value of the residual and Jacobian at the starting point
   residual!(model, x, Fx)
@@ -79,7 +86,7 @@ function levenberg_marquardt_mp!(solver    :: AbstractLMSolver{T,S,ST},
   verbose && (levenberg_marquardt_log_header(logging, model, TR, param, η₁, η₂, σ₁, σ₂, max_eval,
                                               λmin, restol, res_rtol, atol, rtol, in_rtol,
                                               in_itmax, in_conlim))
-  verbose && (levenberg_marquardt_log_row(logging, iter, (rNorm^2)/2, ArNorm, zero(T), param, zero(T), 
+  verbose && (levenberg_marquardt_log_row(logging, iter, rNorm, ArNorm, zero(T), param, zero(T), 
                                           zero(T), zero(T), zero(T), "null", 0, zero(T), 
                                           neval_jprod_residual(model)))
 
@@ -90,8 +97,8 @@ function levenberg_marquardt_mp!(solver    :: AbstractLMSolver{T,S,ST},
 
     # Solve the subproblem min ‖Jx*d + Fx‖^2
     Fxm .= Fx
-    Fxm .*= -1
-    in_solver = solve_sub_problem!(in_solver, Jx, Fxm, TR, param,
+    Fxm .*= T(-1)
+    in_solver = solve_sub_problem!(model, meta_solver, Jx, Fxm, TR, param,
                                   in_axtol, in_btol, in_atol, in_rtol,
                                   in_etol, in_itmax, in_conlim)
 
@@ -147,7 +154,7 @@ function levenberg_marquardt_mp!(solver    :: AbstractLMSolver{T,S,ST},
     iter += 1
     solver.stats.inner_iter += in_solver.stats.niter
     step_time = time()-start_step_time
-    verbose && (levenberg_marquardt_log_row(logging, iter, (rNorm^2)/2, ArNorm, dNorm, param, Ared, 
+    verbose && (levenberg_marquardt_log_row(logging, iter, rNorm, ArNorm, dNorm, param, Ared, 
                                             Pred, ρ, in_solver.stats.Acond, inner_status, 
                                             in_solver.stats.niter, step_time, 
                                             neval_jprod_residual(model)))

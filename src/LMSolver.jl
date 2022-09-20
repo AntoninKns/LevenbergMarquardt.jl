@@ -1,4 +1,4 @@
-export AbstractLMSolver, LMSolver, LMSolverAD, LMSolverFacto, GPUSolver
+export AbstractLMSolver, LMSolver, LMSolverAD, LMSolverFacto, GPUSolver, LMMPSolver
 
 "Abstract type for using Levenberg Marquardt solvers in-place"
 abstract type AbstractLMSolver{T,S,ST} end
@@ -31,29 +31,29 @@ mutable struct LMSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
   stats :: LMStats{T,S}
 
-  function LMSolver(model)
+  function LMSolver(model; 
+                    T = eltype(model.meta.x0), 
+                    S = typeof(model.meta.x0))
   
-    x = similar(model.meta.x0)
     m = model.nls_meta.nequ
     n = model.meta.nvar
     nnzj = model.nls_meta.nnzj
-    T = eltype(x)
-    S = typeof(x)
 
-    Fx = similar(x, m)
-    Fxp = similar(x, m)
-    xp = similar(x, n)
-    Fxm = similar(x, m)
+    x = S(undef, n)
+    Fx = S(undef, m)
+    Fxp = S(undef, m)
+    xp = S(undef, n)
+    Fxm = S(undef, m)
 
     rows = Vector{Int}(undef, nnzj)
     cols = Vector{Int}(undef, nnzj)
-    vals = similar(x, nnzj)
+    vals = S(undef, nnzj)
 
-    Jv = similar(x, m)
-    Jtv = similar(x, n)
+    Jv = S(undef, m)
+    Jtv = S(undef, n)
 
-    Ju = similar(x, m)
-    Jtu = similar(x, n)
+    Ju = S(undef, m)
+    Jtu = S(undef, n)
 
     in_solver = LsmrSolver(m, n, S)
 
@@ -314,6 +314,31 @@ mutable struct GPUSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
                          Ju, Jtu, 
                          in_solver, 
                          stats)
+
+    return solver
+  end
+end
+
+
+mutable struct LMMPSolver{T,S,ST}
+
+  F32Solver :: AbstractLMSolver
+  F64Solver :: AbstractLMSolver
+
+  function LMMPSolver(model; F32 = false, F64 = true)
+  
+    if F32
+      F32Solver = LMSolver(model, T = Float32, S = Vector{Float32})
+    end
+
+    if F64
+      F64Solver = LMSolver(model, T = Float64, S = Vector{Float64})
+    end
+
+    T = eltype(F64Solver.x)
+    S = typeof(F64Solver.x)
+    ST = typeof(F64Solver.in_solver)
+    solver = new{T,S,ST}(F32Solver, F64Solver)
 
     return solver
   end
