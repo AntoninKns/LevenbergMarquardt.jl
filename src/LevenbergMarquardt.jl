@@ -13,6 +13,7 @@ include("LMSolver.jl")
 include("LMFunctions.jl")
 include("LMGPUFunctions.jl")
 include("LMMPFunctions.jl")
+include("LMLDLFunctions.jl")
 
 include("temp/ReverseADNLSfromBAM.jl")
 include("temp/Partitions.jl")

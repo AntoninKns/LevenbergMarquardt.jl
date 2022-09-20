@@ -101,16 +101,17 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
     Fxp = residual!(model, xp, Fxp)
     rNormp = norm(Fxp)
 
-    println(dNorm)
-    println(rNormp)
-
     # Test the quality of the step 
     # ρ = (‖F(xk)‖² - ‖F(xk+1)‖²) / (‖F(xk)‖² - ‖J(xk)*d + F(xk)‖² - λ‖d‖²)
     mul!(Ju, Jx, d)
     Ju .= Ju .+ Fx
     normJu = norm(Ju)
     rNorm² = rNorm^2
-    Pred = (rNorm² - (normJu^2 + param^2*dNorm^2))/2
+    if TR
+      Pred = (rNorm² - (normJu^2 + dNorm^2))/2
+    else
+      Pred = (rNorm² - (normJu^2 + param^2*dNorm^2))/2
+    end
     Ared = (rNorm² - rNormp^2)/2
     ρ = Ared/Pred
 

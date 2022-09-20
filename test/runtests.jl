@@ -2,6 +2,6 @@ using LevenbergMarquardt, BundleAdjustmentModels, NLPModels, LinearAlgebra, Test
 
 include("simple-model.jl")
 include("simple-modelAllocations.jl")
-include("testLevenbergMarquardtAlgorithm.jl")
-include("testLevenbergMarquardtAllocations.jl")
+include("testLMAlgorithm.jl")
+include("testLMAllocations.jl")
 include("testReverseADNLSfromBAM.jl")
