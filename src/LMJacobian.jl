@@ -202,7 +202,7 @@ function update_lambda(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSo
   return solver.Jx
 end
 
-function update_lmabda(model :: AbstractNLSModel, solver :: LDLSolver)
+function update_lambda(model :: AbstractNLSModel, solver :: LDLSolver)
   m = model.nls_meta.nequ
   n = model.meta.nvar
   nnzj = model.nls_meta.nnzj
@@ -212,7 +212,7 @@ function update_lmabda(model :: AbstractNLSModel, solver :: LDLSolver)
   return solver.A
 end
 
-function update_lmabda(model :: AbstractNLSModel, solver :: MINRESSolver)
+function update_lambda(model :: AbstractNLSModel, solver :: MINRESSolver)
   m = model.nls_meta.nequ
   n = model.meta.nvar
   nnzj = model.nls_meta.nnzj

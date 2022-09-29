@@ -1,16 +1,16 @@
 
-function residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, MPSolver})
+function residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, MPSolver})
   residual!(model, x, solver.Fx)
   return solver.Fx
 end
 
-function residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{GPUSolver, MPGPUSolver})
+function residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{GPUSolver, MPGPUSolver})
   residual!(model, x, solver.Fx)
   copyto!(solver.GPUFx, solver.Fx)
   return solver.Fx
 end
 
-function residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LDLSolver, MINRESSolver})
+function residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LDLSolver, MINRESSolver})
   m = model.nls_meta.nequ
   n = model.meta.nvar
   T = eltype(x)
@@ -20,18 +20,18 @@ function residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Uni
   return solver.Fx
 end
 
-function residualp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{LMSolver, MPSolver})
+function residualLMp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{LMSolver, MPSolver})
   residual!(model, xp, solver.Fxp)
   return solver.Fxp
 end
 
-function residualp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{GPUSolver, MPGPUSolver})
+function residualLMp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{GPUSolver, MPGPUSolver})
   residual!(model, xp, solver.Fxp)
   copyto!(solver.GPUFxp, solver.Fxp)
   return solver.Fxp
 end
 
-function residualp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{LDLSolver, MINRESSolver})
+function residualLMp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{LDLSolver, MINRESSolver})
   m = model.nls_meta.nequ
   n = model.meta.nvar
   T = eltype(x)

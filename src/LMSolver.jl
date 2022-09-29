@@ -16,6 +16,7 @@ mutable struct LMSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
   Fxp :: S
   xp :: S
   Fxm :: S
+  d :: S
 
   rows :: Vector{Int}
   cols :: Vector{Int}
@@ -28,6 +29,11 @@ mutable struct LMSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
   Jtu :: S
 
   in_solver :: ST
+
+  TR :: Bool
+  λ :: T
+  Δ :: T
+  λmin :: T
 
   stats :: LMStats{T,S}
 
@@ -44,6 +50,7 @@ mutable struct LMSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
     Fxp = S(undef, m)
     xp = S(undef, n)
     Fxm = S(undef, m)
+    d = S(undef, n)
 
     rows = Vector{Int}(undef, nnzj)
     cols = Vector{Int}(undef, nnzj)
@@ -57,11 +64,17 @@ mutable struct LMSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
     in_solver = LsmrSolver(m, n, S)
 
+    TR = false
+    λ = zero(T)
+    Δ = T(1e4)
+    λmin = T(1e-1)
+
     ST = typeof(in_solver)
 
     stats = LMStats(model, :unknown, similar(x), zero(T), zero(T), zero(T), zero(T), 0, 0, 0.)
 
-    solver = new{T,S,ST}(x, Fx, Fxp, xp, Fxm, rows, cols, vals, Jv, Jtv, Ju, Jtu, in_solver, stats)
+    solver = new{T,S,ST}(x, Fx, Fxp, xp, Fxm, d, rows, cols, vals, Jv, Jtv, Ju, Jtu, 
+                          in_solver, TR, λ, Δ, λmin, stats)
 
     return solver
   end
@@ -73,7 +86,7 @@ The outer constructor
     solver = LMSolverAD(n, m, S)
 may be used in order to create these vectors.
 """
-mutable struct LMSolverAD{T,S,ST} <: AbstractLMSolver{T,S,ST}
+mutable struct ADSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
   x :: S
   Fx :: S
@@ -88,6 +101,8 @@ mutable struct LMSolverAD{T,S,ST} <: AbstractLMSolver{T,S,ST}
   Jtu :: S
 
   in_solver :: ST
+
+  TR :: Bool
 
   stats :: LMStats{T,S}
 
@@ -113,67 +128,19 @@ mutable struct LMSolverAD{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
     in_solver = LsmrSolver(m, n, S)
 
+    TR = false
+
     ST = typeof(in_solver)
 
     stats = LMStats{T,S}(model, :unknown, similar(x), zero(T), zero(T), zero(T), zero(T), 0, 0, 0.)
 
-    solver = new{T,S,ST}(x, Fx, Fxp, xp, Fxm, Jv, Jtv, Ju, Jtu, in_solver, stats)
+    solver = new{T,S,ST}(x, Fx, Fxp, xp, Fxm, Jv, Jtv, Ju, Jtu, in_solver, TR, stats)
 
     return solver
   end
 end
 
-mutable struct LMSolverFacto{T,S,ST} <: AbstractLMSolver{T,S,ST}
-
-  x :: S
-  Fx :: S
-  Fxp :: S
-  xp :: S
-  Fxm :: S
-  d :: S
-
-  rows :: Vector{Int}
-  cols :: Vector{Int}
-  vals :: S
-
-  Ju :: S
-  Jtu :: S
-
-  stats :: LMStats{T,S}
-
-  function LMSolverFacto(model)
-  
-    x = similar(model.meta.x0)
-    m = model.nls_meta.nequ
-    n = model.meta.nvar
-    nnzj = model.nls_meta.nnzj
-    T = eltype(x)
-    S = typeof(x)
-
-    Fx = similar(x, m+n)
-    Fxp = similar(x, m+n)
-    xp = similar(x, n)
-    Fxm = similar(x, m+n)
-    d = similar(x, m+n)
-
-    rows = Vector{Int}(undef, nnzj+n)
-    cols = Vector{Int}(undef, nnzj+n)
-    vals = similar(x, nnzj+n)
-
-    Ju = similar(x, m+n)
-    Jtu = similar(x, n)
-
-    ST = Float64
-
-    stats = LMStats(model, :unknown, similar(x), zero(T), zero(T), zero(T), zero(T), 0, 0, 0.)
-
-    solver = new{T,S,ST}(x, Fx, Fxp, xp, Fxm, d, rows, cols, vals, Ju, Jtu, stats)
-
-    return solver
-  end
-end
-
-mutable struct LMSolverLDL{T,S,ST} <: AbstractLMSolver{T,S,ST}
+mutable struct LDLSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
   x :: S
   Fx :: S
@@ -320,7 +287,7 @@ mutable struct GPUSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
 end
 
 
-mutable struct LMMPSolver{T,S,ST}
+mutable struct MPSolver{T,S,ST}
 
   F32Solver :: AbstractLMSolver
   F64Solver :: AbstractLMSolver
@@ -344,7 +311,7 @@ mutable struct LMMPSolver{T,S,ST}
   end
 end
 
-mutable struct LMSolverMINRES{T,S,ST} <: AbstractLMSolver{T,S,ST}
+mutable struct MINRESSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
   x :: S
   Fx :: S
@@ -481,7 +448,7 @@ mutable struct LMSolverGPUAD{T,S,ST} <: AbstractLMSolver{T,S,ST}
   end
 end
 
-mutable struct LMMPGPUSolver{T,S,ST}
+mutable struct MPGPUSolver{T,S,ST}
 
   F32Solver :: AbstractLMSolver
   F64Solver :: AbstractLMSolver

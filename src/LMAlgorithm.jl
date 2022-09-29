@@ -4,7 +4,7 @@ export levenberg_marquardt, levenberg_marquardt!
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt(model; version :: Symbol = :DEFAULT, precisions :: Dict = {}, kwargs...)
+function levenberg_marquardt(model; version :: Symbol = :DEFAULT, precisions :: Dict = Dict(), kwargs...)
   # Adapting the solver depending on the wanted version
   if version == :DEFAULT
     solver = LMSolver(model)
@@ -55,15 +55,18 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
                               logging   :: IO = stdout) where {T,S,ST}
   
   # Set up initial variables contained in the solver
-  (x, in_solver, d, xp, solver) = set_variables!(model, generic_solver, TR, λ, Δ, λmin)
+  (x, d, xp, solver) = set_variables!(model, generic_solver, TR, λ, Δ, λmin)
 
   # Set up the initial value of the residual and Jacobian at the starting point
-  residual!(model, x, solver)
-  set_jac_residual!(model, x, solver, T, S, ST)
+  residualLM!(model, x, solver)
+  set_jac_residual!(model, x, solver)
   
   # Calculate initiale rNorm and ArNorm values
   rNorm = rNorm0 = rNorm!(solver)
   ArNorm = ArNorm0 = ArNorm!(solver)
+
+  solver.stats.rNorm0 = rNorm0
+  solver.stats.ArNorm0 = ArNorm0
 
   # Set up initial parameters
   iter = 0
@@ -79,9 +82,9 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
   verbose && (levenberg_marquardt_log_header(logging, model, solver, η₁, η₂, σ₁, σ₂, max_eval,
                                               restol, res_rtol, atol, rtol, in_rtol,
                                               in_itmax, in_conlim, Val(solver.TR)))
-  verbose && (levenberg_marquardt_log_row(logging, iter, rNorm, ArNorm, zero(T), param, zero(T), 
-                                          zero(T), zero(T), zero(T), "null", 0, zero(T), 
-                                          neval_jprod_residual(model)))
+  verbose && (levenberg_marquardt_log_row(logging, model, solver, iter, rNorm, ArNorm, zero(T), 
+                                          zero(T), zero(T), zero(T), "null", 
+                                          zero(T), Val(solver.TR)))
 
   while !(optimal || small_residual || tired)
 
@@ -89,12 +92,11 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
     start_step_time = time()
 
     # Solve the subproblem min ‖Jx*d + Fx‖^2
-    in_solver = solve_sub_problem!(model, generic_solver, Jx, Fx, TR, param,
-                        in_axtol, in_btol, in_atol, in_rtol,
-                        in_etol, in_itmax, in_conlim)
+    solve_sub_problem!(model, generic_solver, in_axtol, in_btol, in_atol, 
+                       in_rtol, in_etol, in_itmax, in_conlim, Val(solver.TR))
 
     # Calculate ‖d‖, xk+1, F(xk+1) and ‖F(xk+1)‖
-    d = step!(solver, in_solver)
+    d = step!(solver)
     dNorm = norm(d)
     xp .= x .+ d
     residualp!(model, xp, solver)
@@ -105,7 +107,7 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
     # Pred = ‖F(xk)‖² - (‖J(xk)*d + F(xk)‖² + λ²‖d‖²)
     # ρ = Ared / Pred
     Ared = ared(model, solver)
-    Pred = pred(model, solver)
+    Pred = pred(model, solver, Val(solver.TR))
     ρ = Ared/Pred
 
     # Depending on the quality of the step, update the step and/or the parameters
@@ -113,7 +115,7 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
 
       # If the quality of the step is under a certain threshold
       # Adapt λ or Δ to ensure a better next step
-      bad_step_update!(solver, σ₁, λmin)
+      bad_step_update!(solver, σ₁, val(solver.TR))
       update_lambda!(model, solver)
 
     else
@@ -121,21 +123,21 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
       # If the step is good enough we accept it and Update
       # x, J(x), F(x), ‖F(x)‖ and ‖J(x)ᵀF(x)‖
       x .= xp
-      update_jac_residual!(model, x, solver, T, S, ST)
+      update_jac_residual!(model, x, solver)
       residual!(model, x, solver)
       rNorm = rNormp
-      ArNorm!(model, solver)
+      ArNorm!(solver)
 
       if ρ > η₂
 
         # If the quality of the step is above a certain threshold
         # Loosen λ or Δ to try to find a bigger step
-        very_good_step_update!(solver, σ₂)
+        very_good_step_update!(solver, σ₂, val(solver.TR))
       end
       
       # In certains versions of Levenberg Marquardt
       # Some parameters need to be updated in case of a good step
-      good_step_update!(solver, λmin, T)
+      good_step_update!(solver, T, val(solver.TR))
     end
 
     # Update logging information
@@ -143,8 +145,9 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
     iter += 1
     update_iter!(solver)
     step_time = time()-start_step_time
-    verbose && (levenberg_marquardt_log_row(logging, solver, iter, rNorm,
-                                            ArNorm, dNorm, Ared, Pred, ρ))
+    verbose && (levenberg_marquardt_log_row(logging, model, solver, iter, rNorm, ArNorm, 
+                                            dNorm, Ared, Pred, ρ, inner_status, 
+                                            step_time, Val(solver.TR)))
     (logging != stdout) && flush(logging)
 
     # Update stopping conditions
@@ -155,7 +158,7 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
   end
 
   # Update solver stats
-  elapsed_time = time()-start_time
+  elapsed_time = time() - start_time
   solver.stats.iter = iter
   solver.stats.elapsed_time = elapsed_time
   solver.stats.rNorm = rNorm
