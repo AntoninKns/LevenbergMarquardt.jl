@@ -84,7 +84,7 @@ function levenberg_marquardt_mp!(meta_solver    :: LMMPSolver{T,S,ST},
 
   # Header log line
   verbose && (levenberg_marquardt_log_header(logging, model, TR, param, η₁, η₂, σ₁, σ₂, max_eval,
-                                              λmin, restol, res_rtol, atol, rtol, in_rtol,
+                                              restol, res_rtol, atol, rtol, in_rtol,
                                               in_itmax, in_conlim))
   verbose && (levenberg_marquardt_log_row(logging, iter, rNorm, ArNorm, zero(T), param, zero(T), 
                                           zero(T), zero(T), zero(T), "null", 0, zero(T), 

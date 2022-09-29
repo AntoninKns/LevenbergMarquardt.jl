@@ -1,13 +1,12 @@
-export levenberg_marquardt_facto, levenberg_marquardt_facto!
+export levenberg_marquardtMPGPU, levenberg_marquardtMPGPU!
 
 """
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt_facto(model; kwargs...)
-  # Adapting the solver depending on automatic differentiation or not
-  solver = LMSolverFacto(model)
-  levenberg_marquardt_facto!(solver, model; kwargs...)
+function levenberg_marquardtMPGPU(model; F32=false, F64=true, kwargs...)
+  solver = LMMPGPUSolver(model; F32, F64)
+  levenberg_marquardtMPGPU!(solver, model; kwargs...)
   return solver.stats
 end
 
@@ -15,12 +14,12 @@ end
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt_facto!(solver    :: AbstractLMSolver{T,S,ST},
+function levenberg_marquardtMPGPU!(meta_solver    :: LMMPGPUSolver{T,S,ST},
                               model     :: AbstractNLSModel;
                               TR        :: Bool = false,
-                              λ         :: T = T(1.),
+                              λ         :: T = zero(T),
                               Δ         :: T = T(1e4),
-                              η₁        :: T = eps(T)^(1/4),
+                              η₁        :: T = T(eps(T)^(1/4)),
                               η₂        :: T = T(0.99),
                               σ₁        :: T = T(10.0),
                               σ₂        :: T = T(0.1),
@@ -41,31 +40,25 @@ function levenberg_marquardt_facto!(solver    :: AbstractLMSolver{T,S,ST},
                               logging   :: IO = stdout) where {T,S,ST}
 
   # Set up variables from the solver to avoid allocations
-  x, Fx, Fxp, xp, Fxm = model.meta.x0, solver.Fx, solver.Fxp, solver.xp, solver.Fxm
-  Ju, Jtu = solver.Ju, solver.Jtu
-  d1 = solver.d
+  solver = meta_solver.F64Solver
+  Fx, Fxp, xp, d = solver.Fx, solver.Fxp, solver.xp, solver.d
+  Jv, Jtv, Ju, Jtu = solver.Jv, solver.Jtv, solver.Ju, solver.Jtu
+  x = solver.x
+  x .= model.meta.x0
+  #GPUin_solver
+  in_solver = solver.in_solver
 
-  m = model.nls_meta.nequ
-  n = model.meta.nvar
-  nnzj = model.nls_meta.nnzj
+  GPUFx, GPUFxp, GPUFxm, GPUd = solver.GPUFx, solver.GPUFxp, solver.GPUFxm, solver.GPUd
+  GPUJv, GPUJtv = solver.GPUJv, solver.GPUJtv
 
   # Set up the initial value of the residual and Jacobian at the starting point
-  residual!(model, x, view(Fx, 1:m))
-  fill!(view(Fx, m+1:m+n), zero(T))
+  residualGPU!(model, x, Fx, GPUFx)
 
-  @views jac_rows = solver.rows[1:nnzj]
-  @views jac_cols = solver.cols[1:nnzj]
-  @views jac_vals = solver.vals[1:nnzj]
-  jac_structure_residual!(model, jac_rows, jac_cols)
-  jac_coord_residual!(model, x, jac_vals)
-  @views solver.rows[nnzj+1:nnzj+n] = m+1:m+n
-  @views solver.cols[nnzj+1:nnzj+n] = 1:n
-  @views fill!(solver.vals[nnzj+1:nnzj+n], √λ)
-  A = sparse(solver.rows, solver.cols, solver.vals)
+  Jx, GPUJx = set_jac_op_residualGPU!(model, solver, x, Jv, Jtv, GPUJv, GPUJtv)
 
   # Calculate initiale rNorm and ArNorm values
   rNorm = rNorm0 = norm(Fx)
-  mul!(Jtu, A', Fx)
+  mul!(Jtu, Jx', Fx)
   ArNorm = ArNorm0 = norm(Jtu)
 
   solver.stats.rNorm0 = rNorm0
@@ -96,28 +89,24 @@ function levenberg_marquardt_facto!(solver    :: AbstractLMSolver{T,S,ST},
     start_step_time = time()
 
     # Solve the subproblem min ‖Jx*d + Fx‖^2
-    Fxm .= Fx
-    Fxm .*= -1
-    solution = qr(A)
-    mul!(d1, solution.Q', Fxm[solution.prow])
-    @views d2 = d1[1:n]
-    ldiv!(LinearAlgebra.UpperTriangular(solution.R), d2)
-    @views d2[solution.pcol] .= d2
-    
+    GPUFxm .= GPUFx
+    GPUFxm .*= -1
+    in_solver = solve_sub_problem_MPGPU!(model, meta_solver, GPUJx, GPUFxm, TR, param,
+                                          in_axtol, in_btol, in_atol, in_rtol,
+                                          in_etol, in_itmax, in_conlim)
+
     # Calculate ‖d‖, xk+1, F(xk+1) and ‖F(xk+1)‖
-    d = d2
-    dNorm = norm(d)
+    GPUd = in_solver.x
+    copyto!(d, GPUd)
+    dNorm = in_solver.stats.xNorm
     xp .= x .+ d
-    residual!(model, xp, view(Fxp, 1:m))
-    fill!(view(Fxp, m+1:m+n), zero(T))
+    residualGPU!(model, xp, Fxp, GPUFxp)
     rNormp = norm(Fxp)
 
     # Test the quality of the step 
     # ρ = (‖F(xk)‖² - ‖F(xk+1)‖²) / (‖F(xk)‖² - ‖J(xk)*d + F(xk)‖² - λ‖d‖²)
-    @views Jx = sparse(solver.rows[1:nnzj], solver.cols[1:nnzj], solver.vals[1:nnzj])
-    @views Ju = Ju[1:m]
     mul!(Ju, Jx, d)
-    @views Ju .= Ju .+ Fx[1:m]
+    Ju .= Ju .+ Fx
     normJu = norm(Ju)
     rNorm² = rNorm^2
     Pred = (rNorm² - (normJu^2 + param^2*dNorm^2))/2
@@ -125,18 +114,23 @@ function levenberg_marquardt_facto!(solver    :: AbstractLMSolver{T,S,ST},
     ρ = Ared/Pred
 
     # Depending on the quality of the step, update the step and/or the parameters
-    if ρ < η₁ || (Ared < 0 && Pred < 0)
+    if ρ < η₁
 
       # If the quality of the step is under a certain threshold
       # Adapt λ or Δ to ensure a better next step
-      param = bad_step_update!(param, true, σ₁, λmin)
-      @views solver.rows[nnzj+1:nnzj+n] = m+1:m+n
-      @views solver.cols[nnzj+1:nnzj+n] = 1:n
-      @views fill!(solver.vals[nnzj+1:nnzj+n], param)
-      A = sparse(solver.rows, solver.cols, solver.vals)
-      @views Jx = sparse(solver.rows[1:nnzj], solver.cols[1:nnzj], solver.vals[1:nnzj])
+      param = bad_step_update!(param, TR, σ₁, λmin)
 
     else
+
+      # If the step is good enough we accept it and Update
+      # x, J(x), F(x), ‖F(x)‖ and ‖J(x)ᵀF(x)‖
+      x .= xp
+      Jx, GPUJx = update_jac_op_residualGPU!(model, solver, x, Jv, Jtv, GPUJv, GPUJtv)
+      Fx .= Fxp
+      GPUFx .= GPUFxp
+      rNorm = rNormp
+      mul!(Jtu, Jx', Fx)
+      ArNorm = norm(Jtu)
 
       if ρ > η₂
 
@@ -147,35 +141,17 @@ function levenberg_marquardt_facto!(solver    :: AbstractLMSolver{T,S,ST},
       
       # In certains versions of Levenberg Marquardt
       # Some parameters need to be updated in case of a good step
-      param = good_step_update!(param, true, λmin, T)
-
-      # If the step is good enough we accept it and Update
-      # x, J(x), F(x), ‖F(x)‖ and ‖J(x)ᵀF(x)‖
-      x .= xp
-      @views jac_rows = solver.rows[1:nnzj]
-      @views jac_cols = solver.cols[1:nnzj]
-      @views jac_vals = solver.vals[1:nnzj]
-      jac_structure_residual!(model, jac_rows, jac_cols)
-      jac_coord_residual!(model, x, jac_vals)
-      @views solver.rows[nnzj+1:nnzj+n] = m+1:m+n
-      @views solver.cols[nnzj+1:nnzj+n] = 1:n
-      @views fill!(solver.vals[nnzj+1:nnzj+n], param)
-      A = sparse(solver.rows, solver.cols, solver.vals)
-      @views Jx = sparse(solver.rows[1:nnzj], solver.cols[1:nnzj], solver.vals[1:nnzj])
-      Fx .= Fxp
-      rNorm = rNormp
-      @views mul!(Jtu, Jx', Fx[1:m])
-      ArNorm = norm(Jtu)
+      param = good_step_update!(param, TR, λmin, T)
     end
 
     # Update logging information
-    verbose && (inner_status = "QR")
+    verbose && (inner_status = change_stats(in_solver.stats.status))
     iter += 1
-    solver.stats.inner_iter += 1
+    solver.stats.inner_iter += in_solver.stats.niter
     step_time = time()-start_step_time
     verbose && (levenberg_marquardt_log_row(logging, iter, (rNorm^2)/2, ArNorm, dNorm, param, Ared, 
-                                            Pred, ρ, 0., inner_status, 
-                                            1, step_time, 
+                                            Pred, ρ, in_solver.stats.Acond, inner_status, 
+                                            in_solver.stats.niter, step_time, 
                                             neval_jprod_residual(model)))
     (logging != stdout) && flush(logging)
 

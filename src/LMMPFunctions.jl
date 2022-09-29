@@ -38,3 +38,48 @@ function solve_sub_problem!(model, meta_solver, Jx, Fxm, TR, param,
                       conlim = in_conlim)
   return in_solver64
 end
+
+"""
+Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
+Adapting if using a regularized or trust region version
+"""
+function solve_sub_problem_MPGPU!(model, meta_solver, Jx, Fxm, TR, param,
+                                  in_axtol, in_btol, in_atol, in_rtol,
+                                  in_etol, in_itmax, in_conlim)
+  F32Solver, F64Solver = meta_solver.F32Solver, meta_solver.F64Solver
+  in_solver32, in_solver64 = meta_solver.F32Solver.in_solver, meta_solver.F64Solver.in_solver
+  copyto!(F32Solver.GPUFxm, Fxm)
+  copyto!(F32Solver.rows, F64Solver.rows)
+  copyto!(F32Solver.cols, F64Solver.cols)
+  copyto!(F32Solver.vals, F64Solver.vals)
+  Jx32 = sparse(F32Solver.rows, F32Solver.cols, F32Solver.vals)
+  GPUJx32 = CuSparseMatrixCSC(Jx32)
+  in_solver32 = lsmr!(in_solver32, GPUJx32, F32Solver.GPUFxm,
+                      λ = Float32(param),
+                      axtol = zero(Float32),
+                      btol = zero(Float32),
+                      atol = zero(Float32),
+                      rtol = Float32(sqrt(eps(Float32))),
+                      etol = zero(Float32),
+                      itmax = in_itmax,
+                      conlim = Float32(in_conlim))
+  copyto!(F64Solver.d, in_solver32.x)
+  d = F64Solver.d
+  F64Solver.x .= F64Solver.x .+ d
+  GPUFx2 = similar(Fxm)
+  Fx2 = similar(F64Solver.Fx)
+  residualGPU!(model, F64Solver.x, Fx2, GPUFx2)
+  Fxm .= GPUFx2
+  Fxm .*= -1
+  copyto!(F64Solver.Fx, Fxm)
+  in_solver64 = lsmr!(in_solver64, Jx, Fxm,
+                      λ = param,
+                      axtol = in_axtol,
+                      btol = in_btol,
+                      atol = in_atol,
+                      rtol = in_rtol,
+                      etol = in_etol,
+                      itmax = in_itmax,
+                      conlim = in_conlim)
+  return in_solver64
+end

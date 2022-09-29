@@ -4,12 +4,22 @@ export levenberg_marquardt, levenberg_marquardt!
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt(model; AD = false, kwargs...)
-  # Adapting the solver depending on automatic differentiation or not
-  if AD
-    solver = LMSolverAD(model)
-  else
+function levenberg_marquardt(model; version :: Symbol = :DEFAULT, precisions :: Dict = {}, kwargs...)
+  # Adapting the solver depending on the wanted version
+  if version == :DEFAULT
     solver = LMSolver(model)
+  elseif version == :GPU
+    solver = GPUSolver(model)
+  elseif version == :LDL
+    solver = LDLSolver(model)
+  elseif version == :MP
+    solver = MPSolver(model, precisions)
+  elseif version == :MPGPU
+    solver = MPGPUSolver(model, precisions)
+  elseif version == :MINRES
+    solver = MINRESSolver(model)
+  else
+    error("Could not recognize Levenberg-Marquardt version. Available versions are given in the docstring of the function.")
   end
   levenberg_marquardt!(solver, model; kwargs...)
   return solver.stats
@@ -19,7 +29,7 @@ end
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
+function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
                               model     :: AbstractNLSModel;
                               TR        :: Bool = false,
                               λ         :: T = zero(T),
@@ -43,41 +53,32 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
                               in_conlim :: T = 1/√eps(T),
                               verbose   :: Bool = true,
                               logging   :: IO = stdout) where {T,S,ST}
-
-  # Set up variables from the solver to avoid allocations
-  x, Fx, Fxp, xp, Fxm = solver.x, solver.Fx, solver.Fxp, solver.xp, solver.Fxm
-  Jv, Jtv, Ju, Jtu = solver.Jv, solver.Jtv, solver.Ju, solver.Jtu
-  in_solver = solver.in_solver
-  x .= model.meta.x0
+  
+  # Set up initial variables contained in the solver
+  (x, in_solver, d, xp, solver) = set_variables!(model, generic_solver, TR, λ, Δ, λmin)
 
   # Set up the initial value of the residual and Jacobian at the starting point
-  residual!(model, x, Fx)
-
-  Jx = set_jac_op_residual!(model, solver, T, S, ST, x, Jv, Jtv)
-
+  residual!(model, x, solver)
+  set_jac_residual!(model, x, solver, T, S, ST)
+  
   # Calculate initiale rNorm and ArNorm values
-  rNorm = rNorm0 = norm(Fx)
-  mul!(Jtu, Jx', Fx)
-  ArNorm = ArNorm0 = norm(Jtu)
-
-  solver.stats.rNorm0 = rNorm0
-  solver.stats.ArNorm0 = ArNorm0
+  rNorm = rNorm0 = rNorm!(solver)
+  ArNorm = ArNorm0 = ArNorm!(solver)
 
   # Set up initial parameters
   iter = 0
   start_time = time()
   optimal_cond = atol + rtol*ArNorm0
   optimal_res = restol + res_rtol*rNorm0
-  TR ? param = Δ : param = λ
 
   optimal = false
   small_residual = false
   tired = false
 
   # Header log line
-  verbose && (levenberg_marquardt_log_header(logging, model, TR, param, η₁, η₂, σ₁, σ₂, max_eval,
-                                              λmin, restol, res_rtol, atol, rtol, in_rtol,
-                                              in_itmax, in_conlim))
+  verbose && (levenberg_marquardt_log_header(logging, model, solver, η₁, η₂, σ₁, σ₂, max_eval,
+                                              restol, res_rtol, atol, rtol, in_rtol,
+                                              in_itmax, in_conlim, Val(solver.TR)))
   verbose && (levenberg_marquardt_log_row(logging, iter, rNorm, ArNorm, zero(T), param, zero(T), 
                                           zero(T), zero(T), zero(T), "null", 0, zero(T), 
                                           neval_jprod_residual(model)))
@@ -88,31 +89,23 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
     start_step_time = time()
 
     # Solve the subproblem min ‖Jx*d + Fx‖^2
-    Fxm .= Fx
-    Fxm .*= -1
-    in_solver = solve_sub_problem!(in_solver, Jx, Fxm, TR, param,
-                                  in_axtol, in_btol, in_atol, in_rtol,
-                                  in_etol, in_itmax, in_conlim)
+    in_solver = solve_sub_problem!(model, generic_solver, Jx, Fx, TR, param,
+                        in_axtol, in_btol, in_atol, in_rtol,
+                        in_etol, in_itmax, in_conlim)
 
     # Calculate ‖d‖, xk+1, F(xk+1) and ‖F(xk+1)‖
-    d = in_solver.x
-    dNorm = in_solver.stats.xNorm
+    d = step!(solver, in_solver)
+    dNorm = norm(d)
     xp .= x .+ d
-    Fxp = residual!(model, xp, Fxp)
-    rNormp = norm(Fxp)
+    residualp!(model, xp, solver)
+    rNormp = rNormp!(solver)
 
     # Test the quality of the step 
-    # ρ = (‖F(xk)‖² - ‖F(xk+1)‖²) / (‖F(xk)‖² - ‖J(xk)*d + F(xk)‖² - λ‖d‖²)
-    mul!(Ju, Jx, d)
-    Ju .= Ju .+ Fx
-    normJu = norm(Ju)
-    rNorm² = rNorm^2
-    if TR
-      Pred = (rNorm² - (normJu^2 + dNorm^2))/2
-    else
-      Pred = (rNorm² - (normJu^2 + param^2*dNorm^2))/2
-    end
-    Ared = (rNorm² - rNormp^2)/2
+    # Ared = ‖F(xk)‖² - ‖F(xk+1)‖²
+    # Pred = ‖F(xk)‖² - (‖J(xk)*d + F(xk)‖² + λ²‖d‖²)
+    # ρ = Ared / Pred
+    Ared = ared(model, solver)
+    Pred = pred(model, solver)
     ρ = Ared/Pred
 
     # Depending on the quality of the step, update the step and/or the parameters
@@ -120,40 +113,38 @@ function levenberg_marquardt!(solver    :: AbstractLMSolver{T,S,ST},
 
       # If the quality of the step is under a certain threshold
       # Adapt λ or Δ to ensure a better next step
-      param = bad_step_update!(param, TR, σ₁, λmin)
+      bad_step_update!(solver, σ₁, λmin)
+      update_lambda!(model, solver)
 
     else
 
       # If the step is good enough we accept it and Update
       # x, J(x), F(x), ‖F(x)‖ and ‖J(x)ᵀF(x)‖
       x .= xp
-      Jx = update_jac_op_residual!(model, solver, T, S, ST, x, Jv, Jtv)
-      Fx .= Fxp
+      update_jac_residual!(model, x, solver, T, S, ST)
+      residual!(model, x, solver)
       rNorm = rNormp
-      mul!(Jtu, Jx', Fx)
-      ArNorm = norm(Jtu)
+      ArNorm!(model, solver)
 
       if ρ > η₂
 
         # If the quality of the step is above a certain threshold
         # Loosen λ or Δ to try to find a bigger step
-        param = very_good_step_update!(param, σ₂)
+        very_good_step_update!(solver, σ₂)
       end
       
       # In certains versions of Levenberg Marquardt
       # Some parameters need to be updated in case of a good step
-      param = good_step_update!(param, TR, λmin, T)
+      good_step_update!(solver, λmin, T)
     end
 
     # Update logging information
-    verbose && (inner_status = change_stats(in_solver.stats.status))
+    verbose && (inner_status = change_stats(solver))
     iter += 1
-    solver.stats.inner_iter += in_solver.stats.niter
+    update_iter!(solver)
     step_time = time()-start_step_time
-    verbose && (levenberg_marquardt_log_row(logging, iter, rNorm, ArNorm, dNorm, param, Ared, 
-                                            Pred, ρ, in_solver.stats.Acond, inner_status, 
-                                            in_solver.stats.niter, step_time, 
-                                            neval_jprod_residual(model)))
+    verbose && (levenberg_marquardt_log_row(logging, solver, iter, rNorm,
+                                            ArNorm, dNorm, Ared, Pred, ρ))
     (logging != stdout) && flush(logging)
 
     # Update stopping conditions

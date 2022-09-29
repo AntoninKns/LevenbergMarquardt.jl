@@ -99,8 +99,8 @@ function levenberg_marquardt_MINRES!(solver    :: AbstractLMSolver{T,S,ST},
     residualMINRES!(model, xp, Fxp)
     rNormp = norm(Fxp)
 
-    # Test the quality of the step 
-    # ρ = (‖F(xk)‖² - ‖F(xk+1)‖²) / (‖F(xk)‖² - ‖J(xk)*d + F(xk)‖² - λ‖d‖²)
+    # Test the quality of the step
+    # ρ = (‖F(xk)‖² - ‖F(xk+1)‖²) / (‖F(xk)‖² - ‖J(xk)*d + F(xk)‖² - (λ‖d‖)²)
     @views fill!(d[1:m], zero(T))
     mul!(Ju, A, d)
     @views Ju[1:m] .= Ju[1:m] .+ Fx[1:m]

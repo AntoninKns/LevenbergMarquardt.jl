@@ -1,4 +1,4 @@
-export AbstractLMSolver, LMSolver, LMSolverAD, LMSolverFacto, GPUSolver, LMMPSolver, LMSolverGPUAD
+export AbstractLMSolver, LMSolver, LMSolverAD, LMSolverFacto, GPUSolver, LMMPSolver, LMSolverGPUAD, LMMPGPUSolver
 
 "Abstract type for using Levenberg Marquardt solvers in-place"
 abstract type AbstractLMSolver{T,S,ST} end
@@ -263,15 +263,15 @@ mutable struct GPUSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
   stats :: LMStats{T,S}
 
-  function GPUSolver(model)
+  function GPUSolver(model;
+                    T = eltype(model.meta.x0), 
+                    S = typeof(model.meta.x0))
   
-    x = similar(model.meta.x0)
     m = model.nls_meta.nequ
     n = model.meta.nvar
     nnzj = model.nls_meta.nnzj
-    T = eltype(x)
-    S = typeof(x)
 
+    x = S(undef, n)
     Fx = similar(x, m)
     Fxp = similar(x, m)
     xp = similar(x, n)
@@ -299,7 +299,7 @@ mutable struct GPUSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
     Ju = similar(x, m)
     Jtu = similar(x, n)
 
-    in_solver = LsmrSolver(m, n, CUDA.CuArray{Float64, 1, CUDA.Mem.DeviceBuffer})
+    in_solver = LsmrSolver(m, n, CUDA.CuArray{T, 1, CUDA.Mem.DeviceBuffer})
 
     ST = typeof(in_solver)
 
@@ -476,6 +476,30 @@ mutable struct LMSolverGPUAD{T,S,ST} <: AbstractLMSolver{T,S,ST}
                          GPUJu, GPUJtu,
                          in_solver, 
                          stats)
+
+    return solver
+  end
+end
+
+mutable struct LMMPGPUSolver{T,S,ST}
+
+  F32Solver :: AbstractLMSolver
+  F64Solver :: AbstractLMSolver
+
+  function LMMPGPUSolver(model; F32 = false, F64 = true)
+  
+    if F32
+      F32Solver = GPUSolver(model, T = Float32, S = Vector{Float32})
+    end
+
+    if F64
+      F64Solver = GPUSolver(model, T = Float64, S = Vector{Float64})
+    end
+
+    T = eltype(F64Solver.x)
+    S = typeof(F64Solver.x)
+    ST = typeof(F64Solver.in_solver)
+    solver = new{T,S,ST}(F32Solver, F64Solver)
 
     return solver
   end

@@ -27,5 +27,6 @@ include("LMAlgorithmMP.jl")
 include("LMAlgorithmGPU.jl")
 include("LMAlgorithmMINRES.jl")
 include("LMAlgorithmGPUAD.jl")
+include("LMAlgorithmMPGPU.jl")
 
 end
