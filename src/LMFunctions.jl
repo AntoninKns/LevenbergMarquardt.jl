@@ -99,15 +99,11 @@ function pred(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolv
 end
 
 function pred(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver}, 
-              rNorm :: AbstractFloat, dNorm :: AbstractFloat)
-  mul!(Ju, Jx, d)
-  Ju .= Ju .+ Fx
-  normJu = norm(Ju)
-  if solver.TR
-    return rNorm^2 - (normJu^2 + dNorm^2)
-  else
-    return rNorm^2 - (normJu^2 + solver.λ^2*dNorm^2)
-  end
+              rNorm :: AbstractFloat, dNorm :: AbstractFloat, :: Val{false})
+  mul!(solver.Ju, solver.Jx, solver.d)
+  solver.Ju .= solver.Ju .+ solver.Fx
+  normJu = norm(solver.Ju)
+  return rNorm^2 - (normJu^2 + solver.λ^2*dNorm^2)
 end
 
 function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{LMSolver, ADSolver, GPUSolver}, 

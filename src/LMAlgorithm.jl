@@ -99,15 +99,15 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
     d = step!(solver)
     dNorm = norm(d)
     xp .= x .+ d
-    residualp!(model, xp, solver)
+    residualLMp!(model, xp, solver)
     rNormp = rNormp!(solver)
 
     # Test the quality of the step 
     # Ared = ‖F(xk)‖² - ‖F(xk+1)‖²
     # Pred = ‖F(xk)‖² - (‖J(xk)*d + F(xk)‖² + λ²‖d‖²)
     # ρ = Ared / Pred
-    Ared = ared(model, solver)
-    Pred = pred(model, solver, Val(solver.TR))
+    Ared = ared(solver, rNorm, rNormp)
+    Pred = pred(solver, rNorm, dNorm, Val(solver.TR))
     ρ = Ared/Pred
 
     # Depending on the quality of the step, update the step and/or the parameters
@@ -115,7 +115,7 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
 
       # If the quality of the step is under a certain threshold
       # Adapt λ or Δ to ensure a better next step
-      bad_step_update!(solver, σ₁, val(solver.TR))
+      bad_step_update!(solver, σ₁, Val(solver.TR))
       update_lambda!(model, solver)
 
     else
@@ -124,7 +124,7 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
       # x, J(x), F(x), ‖F(x)‖ and ‖J(x)ᵀF(x)‖
       x .= xp
       update_jac_residual!(model, x, solver)
-      residual!(model, x, solver)
+      residualLM!(model, x, solver)
       rNorm = rNormp
       ArNorm!(solver)
 
@@ -132,12 +132,12 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
 
         # If the quality of the step is above a certain threshold
         # Loosen λ or Δ to try to find a bigger step
-        very_good_step_update!(solver, σ₂, val(solver.TR))
+        very_good_step_update!(solver, σ₂, Val(solver.TR))
       end
       
       # In certains versions of Levenberg Marquardt
       # Some parameters need to be updated in case of a good step
-      good_step_update!(solver, T, val(solver.TR))
+      good_step_update!(solver, T, Val(solver.TR))
     end
 
     # Update logging information

@@ -38,7 +38,7 @@ function levenberg_marquardt_log_header(logging :: IO, model :: AbstractNLSModel
   @printf(logging, "| max_eval :   %6d | restol   : %1.2e | res_rtol  : %1.2e | atol : %1.2e | rtol : %1.2e |\n", max_eval, restol, res_rtol, atol, rtol)
   @printf(logging, "| in_rtol  : %1.2e | in_itmax :   %6d | in_conlim : %1.2e |\n\n", in_rtol, in_itmax, in_conlim)
   @printf(logging, "|---------------------------------------------------------------------------------------------------------------|\n")
-  @printf(logging, "| %4s %8s %8s %8s %8s %9s %9s %9s %8s %4s %6s %8s %8s |\n", "iter", "‖F(x)‖", "‖J'F‖", "‖d‖", param_string, "Ared", "Pred", "ρ", "Jcond", "sub", "sub-it", "sub-time", "jprod")
+  @printf(logging, "| %4s %8s %8s %8s %8s %9s %9s %9s %8s %4s %6s %8s %8s |\n", "iter", "‖F(x)‖", "‖J'F‖", "‖d‖", "Δ", "Ared", "Pred", "ρ", "Jcond", "sub", "sub-it", "sub-time", "jprod")
   @printf(logging, "|---------------------------------------------------------------------------------------------------------------|\n")
 end
 
@@ -55,7 +55,7 @@ function levenberg_marquardt_log_header(logging :: IO, model :: AbstractNLSModel
   @printf(logging, "| max_eval :   %6d | restol   : %1.2e | res_rtol  : %1.2e | atol : %1.2e | rtol : %1.2e |\n", max_eval, restol, res_rtol, atol, rtol)
   @printf(logging, "| in_rtol  : %1.2e | in_itmax :   %6d | in_conlim : %1.2e |\n\n", in_rtol, in_itmax, in_conlim)
   @printf(logging, "|---------------------------------------------------------------------------------------------------------------|\n")
-  @printf(logging, "| %4s %8s %8s %8s %8s %9s %9s %9s %8s %4s %6s %8s %8s |\n", "iter", "‖F(x)‖", "‖J'F‖", "‖d‖", param_string, "Ared", "Pred", "ρ", "Jcond", "sub", "sub-it", "sub-time", "jprod")
+  @printf(logging, "| %4s %8s %8s %8s %8s %9s %9s %9s %8s %4s %6s %8s %8s |\n", "iter", "‖F(x)‖", "‖J'F‖", "‖d‖", "λ", "Ared", "Pred", "ρ", "Jcond", "sub", "sub-it", "sub-time", "jprod")
   @printf(logging, "|---------------------------------------------------------------------------------------------------------------|\n")
 end
 

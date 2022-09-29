@@ -28,6 +28,8 @@ mutable struct LMSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
   Ju :: S
   Jtu :: S
 
+  Jx :: LinearOperator{T}
+
   in_solver :: ST
 
   TR :: Bool
@@ -62,18 +64,20 @@ mutable struct LMSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
     Ju = S(undef, m)
     Jtu = S(undef, n)
 
+    Jx = opEye(n)
+
     in_solver = LsmrSolver(m, n, S)
 
     TR = false
     λ = zero(T)
-    Δ = T(1e4)
-    λmin = T(1e-1)
+    Δ = zero(T)
+    λmin = zero(T)
 
     ST = typeof(in_solver)
 
     stats = LMStats(model, :unknown, similar(x), zero(T), zero(T), zero(T), zero(T), 0, 0, 0.)
 
-    solver = new{T,S,ST}(x, Fx, Fxp, xp, Fxm, d, rows, cols, vals, Jv, Jtv, Ju, Jtu, 
+    solver = new{T,S,ST}(x, Fx, Fxp, xp, Fxm, d, rows, cols, vals, Jv, Jtv, Ju, Jtu, Jx,
                           in_solver, TR, λ, Δ, λmin, stats)
 
     return solver
