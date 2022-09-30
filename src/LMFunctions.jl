@@ -114,11 +114,13 @@ function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{LMSol
   return x, d, xp, solver
 end
 
-function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{MPSolver, MPGPUSolver})
-  solver = generic_solver.F32Solver
+function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{MPSolver, MPGPUSolver},
+                        TR :: Bool, λ :: AbstractFloat, Δ :: AbstractFloat, λmin :: AbstractFloat)
+  solver = generic_solver.F64Solver
   x, in_solver, d, xp = solver.x, solver.in_solver, solver.d, solver.xp
+  solver.TR, solver.λ, solver.Δ, solver.λmin = TR, λ, Δ, λmin
   copyto!(x, model.meta.x0)
-  return x, in_solver, d, xp, solver
+  return x, d, xp, solver
 end
 
 function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{LDLSolver, MINRESSolver})

@@ -61,7 +61,7 @@ mutable struct LMSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
     Ju = S(undef, m)
     Jtu = S(undef, n)
 
-    Jx = opEye(n)
+    Jx = opEye(T, n)
 
     in_solver = LsmrSolver(m, n, S)
 

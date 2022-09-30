@@ -4,25 +4,29 @@ export levenberg_marquardt, levenberg_marquardt!
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt(model :: AbstractNLSModel; version :: Symbol = :DEFAULT, precisions :: Dict = Dict(), kwargs...)
+function levenberg_marquardt(model :: AbstractNLSModel; version :: Symbol = :DEFAULT, precisions :: Dict = Dict("F32" => true, "F64" => true), kwargs...)
   # Adapting the solver depending on the wanted version
   if version == :DEFAULT
-    solver = LMSolver(model)
+    generic_solver = LMSolver(model)
   elseif version == :GPU
-    solver = GPUSolver(model)
+    generic_solver = GPUSolver(model)
   elseif version == :LDL
-    solver = LDLSolver(model)
+    generic_solver = LDLSolver(model)
   elseif version == :MP
-    solver = MPSolver(model, precisions)
+    generic_solver = MPSolver(model, precisions)
   elseif version == :MPGPU
-    solver = MPGPUSolver(model, precisions)
+    generic_solver = MPGPUSolver(model, precisions)
   elseif version == :MINRES
-    solver = MINRESSolver(model)
+    generic_solver = MINRESSolver(model)
   else
     error("Could not recognize Levenberg-Marquardt version. Available versions are given in the docstring of the function.")
   end
-  levenberg_marquardt!(solver, model; kwargs...)
-  return solver.stats
+  levenberg_marquardt!(generic_solver, model; kwargs...)
+  if version == :MP || version == :MPGPU
+    return generic_solver.F64Solver.stats
+  else
+    return generic_solver.stats
+  end
 end
 
 """
@@ -44,7 +48,7 @@ end
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
+function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, MPSolver{T,S,ST}},
                               model     :: AbstractNLSModel;
                               TR        :: Bool = false,
                               λ         :: T = zero(T),
