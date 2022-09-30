@@ -2,7 +2,7 @@
 Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
 Adapting if using a regularized or trust region version
 """
-function solve_sub_problem!(model, meta_solver, Jx, Fxm, TR, param,
+function solve_sub_problemxx!(model, meta_solver, Jx, Fxm, TR, param,
                             in_axtol, in_btol, in_atol, in_rtol,
                             in_etol, in_itmax, in_conlim)
   F32Solver, F64Solver = meta_solver.F32Solver, meta_solver.F64Solver
@@ -43,7 +43,7 @@ end
 Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
 Adapting if using a regularized or trust region version
 """
-function solve_sub_problem_MPGPU!(model, meta_solver, Jx, Fxm, TR, param,
+function solve_sub_problem_MPGPUxx!(model, meta_solver, Jx, Fxm, TR, param,
                                   in_axtol, in_btol, in_atol, in_rtol,
                                   in_etol, in_itmax, in_conlim)
   F32Solver, F64Solver = meta_solver.F32Solver, meta_solver.F64Solver

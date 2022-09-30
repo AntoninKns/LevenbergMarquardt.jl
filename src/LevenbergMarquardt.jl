@@ -8,7 +8,7 @@ using LDLFactorizations, LimitedLDLFactorizations
 using CUDA, CUDA.CUSPARSE
 
 include("LMStats.jl")
-include("LMSolver.jl")
+include("Solvers/AbstractLMSolver.jl")
 include("LMUtils.jl")
 include("LMFunctions.jl")
 include("LMMPFunctions.jl")

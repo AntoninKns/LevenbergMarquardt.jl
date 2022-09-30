@@ -4,7 +4,7 @@ export levenberg_marquardt, levenberg_marquardt!
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt(model; version :: Symbol = :DEFAULT, precisions :: Dict = Dict(), kwargs...)
+function levenberg_marquardt(model :: AbstractNLSModel; version :: Symbol = :DEFAULT, precisions :: Dict = Dict(), kwargs...)
   # Adapting the solver depending on the wanted version
   if version == :DEFAULT
     solver = LMSolver(model)
@@ -18,6 +18,21 @@ function levenberg_marquardt(model; version :: Symbol = :DEFAULT, precisions :: 
     solver = MPGPUSolver(model, precisions)
   elseif version == :MINRES
     solver = MINRESSolver(model)
+  else
+    error("Could not recognize Levenberg-Marquardt version. Available versions are given in the docstring of the function.")
+  end
+  levenberg_marquardt!(solver, model; kwargs...)
+  return solver.stats
+end
+
+"""
+Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
+LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
+"""
+function levenberg_marquardt(model :: ReverseADNLSModel; version :: Symbol = :DEFAULT, kwargs...)
+  # Adapting the solver depending on the wanted version
+  if version == :DEFAULT
+    solver = ADSolver(model)
   else
     error("Could not recognize Levenberg-Marquardt version. Available versions are given in the docstring of the function.")
   end
@@ -126,7 +141,7 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
       update_jac_residual!(model, x, solver)
       residualLM!(model, x, solver)
       rNorm = rNormp
-      ArNorm!(solver)
+      ArNorm = ArNorm!(solver)
 
       if ρ > η₂
 
@@ -143,7 +158,6 @@ function levenberg_marquardt!(generic_solver    :: AbstractLMSolver{T,S,ST},
     # Update logging information
     verbose && (inner_status = change_stats(solver))
     iter += 1
-    update_iter!(solver)
     step_time = time()-start_step_time
     verbose && (levenberg_marquardt_log_row(logging, model, solver, iter, rNorm, ArNorm, 
                                             dNorm, Ared, Pred, ρ, inner_status, 

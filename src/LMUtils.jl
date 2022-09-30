@@ -1,7 +1,7 @@
 """
 Shortens status log of Levenberg Marquardt subproblem
 """
-function change_stats(solver :: LMSolver)
+function change_stats(solver :: Union{LMSolver, ADSolver})
   status = solver.in_solver.stats.status
   if status == "maximum number of iterations exceeded"
     status = "iter"

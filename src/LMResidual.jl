@@ -1,5 +1,5 @@
 
-function residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, MPSolver})
+function residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, ADSolver, MPSolver})
   residual!(model, x, solver.Fx)
   return solver.Fx
 end
@@ -20,7 +20,7 @@ function residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: U
   return solver.Fx
 end
 
-function residualLMp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{LMSolver, MPSolver})
+function residualLMp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{LMSolver, ADSolver, MPSolver})
   residual!(model, xp, solver.Fxp)
   return solver.Fxp
 end
