@@ -4,7 +4,6 @@ export AbstractLMSolver
 abstract type AbstractLMSolver{T,S,ST} end
 
 include("ADSolver.jl")
-include("GPUADSolver.jl")
 include("GPUSolver.jl")
 include("LDLSolver.jl")
 include("LMSolver.jl")

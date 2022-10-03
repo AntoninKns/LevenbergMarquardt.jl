@@ -26,6 +26,13 @@ function change_stats(solver :: Union{LMSolver, ADSolver, GPUSolver})
 end
 
 """
+Shortens status log of Levenberg Marquardt subproblem
+"""
+function change_stats(solver :: LDLSolver)
+  return "LDL"
+end
+
+"""
 Header of Levenberg Marquardt logs
 """
 function levenberg_marquardt_log_header(logging :: IO, model :: AbstractNLSModel, solver :: AbstractLMSolver, η₁ :: AbstractFloat, η₂ :: AbstractFloat, 
@@ -83,9 +90,26 @@ function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, s
           Jcond, inner_status, inner_iter, step_time, neval_jprod_residual(model))
 end
 
-#= """
+"""
 Row of Levenberg Marquardt logs
 """
-function levenberg_marquardt_log_row(logging, iter, rNorm, ArNorm, dNorm, param, Ared, Pred, ρ, Jcond, inner_status, inner_iter, step_time, jprod)
-  @printf(logging, "| %4d %1.2e %1.2e %1.2e %1.2e % 1.2e % 1.2e % 1.2e %1.2e %4s %6d %1.2e %8d |\n", iter, rNorm, ArNorm, dNorm, param, Ared, Pred, ρ, Jcond, inner_status, inner_iter, step_time, jprod)
-end =#
+function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LDLSolver}, iter :: Integer, rNorm :: AbstractFloat, 
+                                      ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
+                                      inner_status :: String, step_time :: AbstractFloat, ::Val{true})
+  Jcond = 0.
+  inner_iter = 0
+  @printf(logging, "| %4d %1.2e %1.2e %1.2e %1.2e % 1.2e % 1.2e % 1.2e %1.2e %4s %6d %1.2e %8d |\n", iter, rNorm, ArNorm, dNorm, solver.Δ, Ared, Pred, ρ, 
+          Jcond, inner_status, inner_iter, step_time, 1.)
+end
+
+"""
+Row of Levenberg Marquardt logs
+"""
+function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LDLSolver}, iter :: Integer, rNorm :: AbstractFloat, 
+                                      ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
+                                      inner_status :: String, step_time :: AbstractFloat, ::Val{false})
+  Jcond = 0.
+  inner_iter = 0
+  @printf(logging, "| %4d %1.2e %1.2e %1.2e %1.2e % 1.2e % 1.2e % 1.2e %1.2e %4s %6d %1.2e %8d |\n", iter, rNorm, ArNorm, dNorm, solver.λ, Ared, Pred, ρ, 
+          Jcond, inner_status, inner_iter, step_time, 1.)
+end

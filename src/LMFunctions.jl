@@ -59,28 +59,32 @@ function rNormp!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUS
   return norm(solver.Fxp)
 end
 
-function ArNorm!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver})
+function ArNorm!(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver})
   mul!(solver.Jtu, solver.Jx', solver.Fx)
   return norm(solver.Jtu)
 end
 
-function ArNorm!(solver :: Union{LDLSolver, MINRESSolver})
+function ArNorm!(model :: AbstractNLSModel, solver :: Union{LDLSolver, MINRESSolver})
+  m = model.nls_meta.nequ
+  n = model.meta.nvar
   mul!(solver.Jtu, solver.A', solver.Fx)
   @views ArNorm = norm(solver.Jtu[m+1:m+n])
   return ArNorm
 end
 
-function step!(solver :: Union{LMSolver, ADSolver})
+function step!(model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver})
   solver.d .= solver.in_solver.x
   return solver.d
 end
 
-function step!(solver :: Union{MPSolver, GPUSolver, MPGPUSolver})
+function step!(model :: AbstractNLSModel, solver :: Union{MPSolver, GPUSolver, MPGPUSolver})
   copyto!(solver.d, solver.in_solver.x)
   return solver.d
 end
 
-function step!(solver :: Union{LDLSolver, MINRESSolver})
+function step!(model :: AbstractNLSModel, solver :: Union{LDLSolver, MINRESSolver})
+  m = model.nls_meta.nequ
+  n = model.meta.nvar
   @views solver.d = solver.fulld[m+1:m+n]
   return solver.d
 end
@@ -90,7 +94,7 @@ function ared(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolv
   return rNorm^2 - rNormp^2
 end
 
-function pred(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver}, 
+function pred(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver}, 
               rNorm :: AbstractFloat, dNorm :: AbstractFloat, :: Val{true})
   mul!(solver.Ju, solver.Jx, solver.d)
   solver.Ju .= solver.Ju .+ solver.Fx
@@ -98,11 +102,22 @@ function pred(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolv
   return rNorm^2 - (normJu^2 + dNorm^2)
 end
 
-function pred(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver}, 
+function pred(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver}, 
               rNorm :: AbstractFloat, dNorm :: AbstractFloat, :: Val{false})
   mul!(solver.Ju, solver.Jx, solver.d)
   solver.Ju .= solver.Ju .+ solver.Fx
   normJu = norm(solver.Ju)
+  return rNorm^2 - (normJu^2 + solver.λ^2*dNorm^2)
+end
+
+function pred(model :: AbstractNLSModel, solver :: LDLSolver, 
+              rNorm :: AbstractFloat, dNorm :: AbstractFloat, :: Val{false})
+  m = model.nls_meta.nequ
+  T = eltype(solver.x)
+  @views fill!(solver.fulld[1:m], zero(T))
+  mul!(solver.Ju, solver.A, solver.fulld)
+  @views solver.Ju[1:m] .= solver.Ju[1:m] .+ solver.Fx[1:m]
+  @views normJu = norm(solver.Ju[1:m])
   return rNorm^2 - (normJu^2 + solver.λ^2*dNorm^2)
 end
 
@@ -117,15 +132,19 @@ end
 function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{MPSolver, MPGPUSolver},
                         TR :: Bool, λ :: AbstractFloat, Δ :: AbstractFloat, λmin :: AbstractFloat)
   solver = generic_solver.F64Solver
-  x, in_solver, d, xp = solver.x, solver.in_solver, solver.d, solver.xp
+  x, d, xp = solver.x, solver.d, solver.xp
   solver.TR, solver.λ, solver.Δ, solver.λmin = TR, λ, Δ, λmin
   copyto!(x, model.meta.x0)
   return x, d, xp, solver
 end
 
-function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{LDLSolver, MINRESSolver})
-  # in_solver = ?
+function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{LDLSolver, MINRESSolver},
+                        TR :: Bool, λ :: AbstractFloat, Δ :: AbstractFloat, λmin :: AbstractFloat)
+  if TR
+    error("Impossible to use trust region with LDL factorization")
+  end
   x, d, xp, solver = generic_solver.x, generic_solver.d, generic_solver.xp, generic_solver
+  solver.TR, solver.λ, solver.Δ, solver.λmin = TR, λ, Δ, λmin
   x .= model.meta.x0
-  return x, in_solver, d, xp, solver
+  return x, d, xp, solver
 end

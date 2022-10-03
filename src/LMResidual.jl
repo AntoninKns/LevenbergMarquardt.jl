@@ -34,7 +34,7 @@ end
 function residualLMp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{LDLSolver, MINRESSolver})
   m = model.nls_meta.nequ
   n = model.meta.nvar
-  T = eltype(x)
+  T = eltype(xp)
 
   residual!(model, xp, view(solver.Fxp, 1:m))
   fill!(view(solver.Fxp, m+1:m+n), zero(T))

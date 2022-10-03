@@ -84,7 +84,7 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
   
   # Calculate initiale rNorm and ArNorm values
   rNorm = rNorm0 = rNorm!(solver)
-  ArNorm = ArNorm0 = ArNorm!(solver)
+  ArNorm = ArNorm0 = ArNorm!(model, solver)
 
   solver.stats.rNorm0 = rNorm0
   solver.stats.ArNorm0 = ArNorm0
@@ -117,7 +117,7 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
                        in_rtol, in_etol, in_itmax, in_conlim, Val(solver.TR))
 
     # Calculate ‖d‖, xk+1, F(xk+1) and ‖F(xk+1)‖
-    d = step!(solver)
+    d = step!(model, solver)
     dNorm = norm(d)
     xp .= x .+ d
     residualLMp!(model, xp, solver)
@@ -128,7 +128,7 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
     # Pred = ‖F(xk)‖² - (‖J(xk)*d + F(xk)‖² + λ²‖d‖²)
     # ρ = Ared / Pred
     Ared = ared(solver, rNorm, rNormp)
-    Pred = pred(solver, rNorm, dNorm, Val(solver.TR))
+    Pred = pred(model, solver, rNorm, dNorm, Val(solver.TR))
     ρ = Ared/Pred
 
     # Depending on the quality of the step, update the step and/or the parameters
@@ -147,7 +147,7 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
       update_jac_residual!(model, x, solver)
       residualLM!(model, x, solver)
       rNorm = rNormp
-      ArNorm = ArNorm!(solver)
+      ArNorm = ArNorm!(model, solver)
 
       if ρ > η₂
 

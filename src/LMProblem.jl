@@ -227,3 +227,18 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPGPUSo
 				conlim = in_conlim)
 	return in_solver64
 end
+
+"""
+Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
+Adapting if using a regularized or trust region version
+"""
+function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: LDLSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
+                            in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+                            in_conlim :: AbstractFloat, :: Val{false})
+	generic_solver.Fxm .= generic_solver.Fx
+	generic_solver.Fxm .*= -1 
+	Au = Symmetric(triu(generic_solver.A), :U)
+	LDLT = ldl(Au)
+	ldiv!(generic_solver.fulld, LDLT, generic_solver.Fxm)
+	return generic_solver.fulld
+end

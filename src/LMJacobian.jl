@@ -144,13 +144,9 @@ function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, so
   nnzj = model.nls_meta.nnzj
   T = eltype(x)
 
-  @views jac_rows = solver.rows[m+1:m+nnzj]
-  @views jac_cols = solver.cols[m+1:m+nnzj]
   @views jac_vals = solver.vals[m+1:m+nnzj]
 
   jac_coord_residual!(model, x, jac_vals)
-
-  jac_cols .+= m
 
   @views solver.rows[1:m] = 1:m
   @views solver.cols[1:m] = 1:m
@@ -198,26 +194,26 @@ function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, so
   return solver.A
 end
 
-function update_lambda(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver})
+function update_lambda!(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver})
   return solver.Jx
 end
 
-function update_lambda(model :: AbstractNLSModel, solver :: LDLSolver)
+function update_lambda!(model :: AbstractNLSModel, solver :: LDLSolver)
   m = model.nls_meta.nequ
   n = model.meta.nvar
   nnzj = model.nls_meta.nnzj
 
-  @views fill!(solver.vals[m+nnzj+1:m+nnzj+n], -λ)
+  @views fill!(solver.vals[m+nnzj+1:m+nnzj+n], -solver.λ)
   solver.A = sparse(solver.rows, solver.cols, solver.vals)
   return solver.A
 end
 
-function update_lambda(model :: AbstractNLSModel, solver :: MINRESSolver)
+function update_lambda!(model :: AbstractNLSModel, solver :: MINRESSolver)
   m = model.nls_meta.nequ
   n = model.meta.nvar
   nnzj = model.nls_meta.nnzj
 
-  @views fill!(solver.vals[m+2*nnzj+1:m+2*nnzj+n], -λ)
+  @views fill!(solver.vals[m+2*nnzj+1:m+2*nnzj+n], -solver.λ)
   solver.A = sparse(solver.rows, solver.cols, solver.vals)
   return solver.A
 end
