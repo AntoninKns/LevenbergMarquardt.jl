@@ -5,13 +5,13 @@ mutable struct MPGPUSolver{T,S,ST}
   F32Solver :: AbstractLMSolver
   F64Solver :: AbstractLMSolver
 
-  function LMMPGPUSolver(model; F32 = false, F64 = true)
+  function MPGPUSolver(model, precisions :: Dict)
   
-    if F32
+    if precisions["F32"]
       F32Solver = GPUSolver(model, T = Float32, S = Vector{Float32})
     end
 
-    if F64
+    if precisions["F64"]
       F64Solver = GPUSolver(model, T = Float64, S = Vector{Float64})
     end
 

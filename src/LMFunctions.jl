@@ -76,7 +76,7 @@ function step!(solver :: Union{LMSolver, ADSolver})
 end
 
 function step!(solver :: Union{MPSolver, GPUSolver, MPGPUSolver})
-  copyto!(solver.d, in_solver.x)
+  copyto!(solver.d, solver.in_solver.x)
   return solver.d
 end
 

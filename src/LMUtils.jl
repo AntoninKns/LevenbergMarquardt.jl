@@ -1,7 +1,7 @@
 """
 Shortens status log of Levenberg Marquardt subproblem
 """
-function change_stats(solver :: Union{LMSolver, ADSolver})
+function change_stats(solver :: Union{LMSolver, ADSolver, GPUSolver})
   status = solver.in_solver.stats.status
   if status == "maximum number of iterations exceeded"
     status = "iter"
@@ -62,7 +62,7 @@ end
 """
 Row of Levenberg Marquardt logs
 """
-function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver}, iter :: Integer, rNorm :: AbstractFloat, 
+function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver}, iter :: Integer, rNorm :: AbstractFloat, 
                                       ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
                                       inner_status :: String, step_time :: AbstractFloat, ::Val{true})
   Jcond = solver.in_solver.stats.Acond
@@ -74,7 +74,7 @@ end
 """
 Row of Levenberg Marquardt logs
 """
-function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver}, iter :: Integer, rNorm :: AbstractFloat, 
+function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver}, iter :: Integer, rNorm :: AbstractFloat, 
                                       ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
                                       inner_status :: String, step_time :: AbstractFloat, ::Val{false})
   Jcond = solver.in_solver.stats.Acond

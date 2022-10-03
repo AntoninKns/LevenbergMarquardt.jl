@@ -12,6 +12,7 @@ mutable struct GPUSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
   Fx :: S
   Fxp :: S
   xp :: S
+  Fxm :: S
   d :: S
 
   GPUFx :: CuVector{T}
@@ -36,7 +37,15 @@ mutable struct GPUSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
   Ju :: S
   Jtu :: S
 
+  Jx :: SparseMatrixCSC{T, Int64}
+  GPUJx :: CuSparseMatrixCSC{T, Int32}
+
   in_solver :: ST
+
+  TR :: Bool
+  λ :: T
+  Δ :: T
+  λmin :: T
 
   stats :: LMStats{T,S}
 
@@ -52,6 +61,7 @@ mutable struct GPUSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
     Fx = similar(x, m)
     Fxp = similar(x, m)
     xp = similar(x, n)
+    Fxm = similar(x, m)
     d = similar(x, n)
     
     GPUFx = CuVector{T}(undef, m)
@@ -73,6 +83,9 @@ mutable struct GPUSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
     GPUJv = CuVector{T}(undef, m)
     GPUJtv = CuVector{T}(undef, n)
 
+    Jx = sparse([one(T)], [one(T)], [one(T)])
+    GPUJx = CuSparseMatrixCSC(Jx)
+
     Ju = similar(x, m)
     Jtu = similar(x, n)
 
@@ -80,16 +93,23 @@ mutable struct GPUSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
     ST = typeof(in_solver)
 
+    TR = false
+    λ = zero(T)
+    Δ = zero(T)
+    λmin = zero(T)
+
     stats = LMStats(model, :unknown, similar(x), zero(T), zero(T), zero(T), zero(T), 0, 0, 0.)
 
-    solver = new{T,S,ST}(x, Fx, Fxp, xp, d,
+    solver = new{T,S,ST}(x, Fx, Fxp, xp, Fxm, d,
                          GPUFx, GPUFxp, GPUFxm, GPUd,
-                         rows, cols, vals, 
+                         rows, cols, vals,
                          GPUrows, GPUcols, GPUvals,
-                         Jv, Jtv, 
+                         Jv, Jtv,
                          GPUJv, GPUJtv,
-                         Ju, Jtu, 
-                         in_solver, 
+                         Ju, Jtu,
+                         Jx, GPUJx,
+                         in_solver,
+                         TR, λ, Δ, λmin,
                          stats)
 
     return solver

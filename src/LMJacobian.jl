@@ -31,7 +31,7 @@ function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solve
   copyto!(solver.GPUcols, solver.cols)
   copyto!(solver.GPUvals, solver.vals)
   solver.Jx = sparse(solver.rows, solver.cols, solver.vals)
-  solver.GPUJx = CuSparseMatrixCSC(Jx)
+  solver.GPUJx = CuSparseMatrixCSC(solver.Jx)
   return solver.Jx
 end
 
@@ -130,7 +130,7 @@ function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, so
   copyto!(solver.GPUcols, solver.cols)
   copyto!(solver.GPUvals, solver.vals)
   solver.Jx = sparse(solver.rows, solver.cols, solver.vals)
-  solver.GPUJx = CuSparseMatrixCSC(Jx)
+  solver.GPUJx = CuSparseMatrixCSC(solver.Jx)
   return solver.Jx
 end
 

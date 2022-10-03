@@ -9,12 +9,14 @@ function levenberg_marquardt(model :: AbstractNLSModel; version :: Symbol = :DEF
   if version == :DEFAULT
     generic_solver = LMSolver(model)
   elseif version == :GPU
+    CUDA.allowscalar(false)
     generic_solver = GPUSolver(model)
   elseif version == :LDL
     generic_solver = LDLSolver(model)
   elseif version == :MP
     generic_solver = MPSolver(model, precisions)
   elseif version == :MPGPU
+    CUDA.allowscalar(false)
     generic_solver = MPGPUSolver(model, precisions)
   elseif version == :MINRES
     generic_solver = MINRESSolver(model)
@@ -48,7 +50,7 @@ end
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, MPSolver{T,S,ST}},
+function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, MPSolver{T,S,ST}, MPGPUSolver{T,S,ST}},
                               model     :: AbstractNLSModel;
                               TR        :: Bool = false,
                               λ         :: T = zero(T),
