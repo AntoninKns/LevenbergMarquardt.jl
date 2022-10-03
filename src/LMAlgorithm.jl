@@ -23,7 +23,9 @@ function levenberg_marquardt(model :: AbstractNLSModel; version :: Symbol = :DEF
   else
     error("Could not recognize Levenberg-Marquardt version. Available versions are given in the docstring of the function.")
   end
+
   levenberg_marquardt!(generic_solver, model; kwargs...)
+  
   if version == :MP || version == :MPGPU
     return generic_solver.F64Solver.stats
   else

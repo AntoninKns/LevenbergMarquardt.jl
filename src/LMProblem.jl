@@ -242,3 +242,18 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: LDLSolv
 	ldiv!(generic_solver.fulld, LDLT, generic_solver.Fxm)
 	return generic_solver.fulld
 end
+
+"""
+Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
+Adapting if using a regularized or trust region version
+"""
+function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MINRESSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
+                            in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+                            in_conlim :: AbstractFloat, :: Val{false})
+	generic_solver.Fxm .= generic_solver.Fx
+	generic_solver.Fxm .*= -1
+	P = ldl(Symmetric(triu(solver.A), :U))
+	P.D .= abs.(P.D)
+	d, stats = minres(A, Fxm, M=P, rtol=in_rtol, itmax=in_itmax, conlim=in_conlim, ldiv=true)
+	return generic_solver.fulld
+end

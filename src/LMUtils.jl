@@ -105,7 +105,7 @@ end
 """
 Row of Levenberg Marquardt logs
 """
-function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LDLSolver}, iter :: Integer, rNorm :: AbstractFloat, 
+function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LDLSolver, MINRESSolver}, iter :: Integer, rNorm :: AbstractFloat, 
                                       ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
                                       inner_status :: String, step_time :: AbstractFloat, ::Val{false})
   Jcond = 0.
