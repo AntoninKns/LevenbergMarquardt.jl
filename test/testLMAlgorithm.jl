@@ -33,3 +33,33 @@ end
   stats = levenberg_marquardt(model, atol=atol, rtol=rtol)
   @test stats.ArNorm ≤ atol + rtol*ArNorm0
 end
+
+@testset "test GPU algorithm" begin
+  model = SimpleNLSModel()
+  stats = levenberg_marquardt(model, version = :GPU)
+  @test stats.rNorm ≤ 1e-5
+end
+
+@testset "test LDL algorithm" begin
+  model = SimpleNLSModel()
+  stats = levenberg_marquardt(model, version = :LDL)
+  @test stats.rNorm ≤ 1e-5
+end
+
+@testset "test MINRES algorithm" begin
+  model = SimpleNLSModel()
+  stats = levenberg_marquardt(model, version = :MINRES)
+  @test stats.rNorm ≤ 1e-5
+end
+
+@testset "test MPGPU algorithm" begin
+  model = SimpleNLSModel()
+  stats = levenberg_marquardt(model, version = :MPGPU)
+  @test stats.rNorm ≤ 1e-5
+end
+
+@testset "test MP algorithm" begin
+  model = SimpleNLSModel()
+  stats = levenberg_marquardt(model, version = :MP)
+  @test stats.rNorm ≤ 1e-5
+end

@@ -19,7 +19,7 @@ end
 @testset "Levenberg-Marquardt Algorithm AD" begin
   model = BundleAdjustmentModel("problem-49-7776")
   modelAD = ADBundleAdjustmentModel(model)
-  solver = LMSolverAD(modelAD)
+  solver = ADSolver(modelAD)
   levenberg_marquardt!(solver, modelAD, verbose = false, max_eval = 1, in_itmax = 1)
   function levenberg_marquardt_AD_alloc(solver, modelAD)
     @allocated levenberg_marquardt!(solver, modelAD, verbose = false, max_eval = 1, in_itmax = 1)

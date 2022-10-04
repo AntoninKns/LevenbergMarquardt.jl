@@ -108,8 +108,8 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPSolve
                             in_conlim :: AbstractFloat, :: Val{false})
   F32Solver, F64Solver = generic_solver.F32Solver, generic_solver.F64Solver
   in_solver32, in_solver64 = generic_solver.F32Solver.in_solver, generic_solver.F64Solver.in_solver
-  generic_solver.Fxm .= generic_solver.Fx
-  generic_solver.Fxm .*= -1 
+  F64Solver.Fxm .= F64Solver.Fx
+  F64Solver.Fxm .*= -1 
   copyto!(F32Solver.Fxm, F64Solver.Fxm)
   copyto!(F32Solver.rows, F64Solver.rows)
   copyto!(F32Solver.cols, F64Solver.cols)
