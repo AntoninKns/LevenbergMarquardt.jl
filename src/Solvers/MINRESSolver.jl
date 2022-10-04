@@ -7,6 +7,7 @@ mutable struct MINRESSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
   Fxp :: S
   xp :: S
   Fxm :: S
+  fulld :: S
   d :: S
 
   rows :: Vector{Int}
@@ -17,6 +18,8 @@ mutable struct MINRESSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
   Jtu :: S
 
   A :: SparseMatrixCSC{T, Int64}
+
+  in_solver :: ST
 
   TR :: Bool
   λ :: T
@@ -38,6 +41,7 @@ mutable struct MINRESSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
     Fxp = similar(x, m+n)
     xp = similar(x, n)
     Fxm = similar(x, m+n)
+    fulld = similar(x, m+n)
     d = similar(x, m+n)
 
     rows = Vector{Int}(undef, m+2*nnzj+n)
@@ -49,16 +53,18 @@ mutable struct MINRESSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
     A = sparse([one(T)], [one(T)], [one(T)])
 
+    in_solver = MinresSolver(m+n, m+n, S)
+
     TR = false
-    λ = zero(T)
+    λ = one(T)
     Δ = zero(T)
     λmin = zero(T)
 
-    ST = Float64
+    ST = typeof(in_solver)
 
     stats = LMStats(model, :unknown, similar(x), zero(T), zero(T), zero(T), zero(T), 0, 0, 0.)
 
-    solver = new{T,S,ST}(x, Fx, Fxp, xp, Fxm, d, rows, cols, vals, Ju, Jtu, A, TR, λ, Δ, λmin, stats)
+    solver = new{T,S,ST}(x, Fx, Fxp, xp, Fxm, fulld, d, rows, cols, vals, Ju, Jtu, A, in_solver, TR, λ, Δ, λmin, stats)
 
     return solver
   end

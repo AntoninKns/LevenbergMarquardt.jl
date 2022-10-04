@@ -252,8 +252,9 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MINRESS
                             in_conlim :: AbstractFloat, :: Val{false})
 	generic_solver.Fxm .= generic_solver.Fx
 	generic_solver.Fxm .*= -1
-	P = ldl(Symmetric(triu(solver.A), :U))
+	P = ldl(Symmetric(triu(generic_solver.A), :U))
 	P.D .= abs.(P.D)
-	d, stats = minres(A, Fxm, M=P, rtol=in_rtol, itmax=in_itmax, conlim=in_conlim, ldiv=true)
-	return generic_solver.fulld
+	minres!(generic_solver.in_solver, generic_solver.A, generic_solver.Fxm, 
+              M=P, rtol=in_rtol, itmax=in_itmax, conlim=in_conlim, ldiv=true)
+	return generic_solver.in_solver
 end

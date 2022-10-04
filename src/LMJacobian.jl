@@ -170,13 +170,9 @@ function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, so
   nnzj = model.nls_meta.nnzj
   T = eltype(x)
 
-  @views jac_rows = solver.rows[m+1:m+nnzj]
-  @views jac_cols = solver.cols[m+1:m+nnzj]
   @views jac_vals = solver.vals[m+1:m+nnzj]
 
   jac_coord_residual!(model, x, jac_vals)
-
-  jac_cols .+= m
 
   @views copyto!(solver.rows[m+nnzj+1:m+2*nnzj], solver.cols[m+1:m+nnzj])
   @views copyto!(solver.cols[m+nnzj+1:m+2*nnzj], solver.rows[m+1:m+nnzj])

@@ -52,7 +52,7 @@ mutable struct LDLSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
     A = sparse([one(T)], [one(T)], [one(T)])
 
     TR = false
-    λ = zero(T)
+    λ = one(T)
     Δ = zero(T)
     λmin = zero(T)
 
