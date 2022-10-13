@@ -6,9 +6,11 @@ using LinearOperators
 using SparseArrays
 using LDLFactorizations, LimitedLDLFactorizations
 using CUDA, CUDA.CUSPARSE
+using Arpack
+using RipQP
 
 include("LMStats.jl")
-include("Solvers/AbstractLMSolver.jl")
+include("solvers/AbstractLMSolver.jl")
 include("LMUtils.jl")
 include("LMFunctions.jl")
 include("LMResidual.jl")

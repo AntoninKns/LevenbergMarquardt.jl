@@ -235,12 +235,25 @@ Adapting if using a regularized or trust region version
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: LDLSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
                             in_conlim :: AbstractFloat, :: Val{false})
+      m = model.nls_meta.nequ
+      n = model.meta.nvar
+      T = eltype(generic_solver.x)
 	generic_solver.Fxm .= generic_solver.Fx
 	generic_solver.Fxm .*= -1 
 	Au = Symmetric(triu(generic_solver.A), :U)
+      D3 = Diagonal(ones(m+n))
+      C_k = Diagonal{T}(undef, m+n)
+      RipQP.equilibrate!(Au, D3, C_k; ϵ=T(1e-6))
 	LDLT = ldl(Au)
-	ldiv!(generic_solver.fulld, LDLT, generic_solver.Fxm)
-	return generic_solver.fulld
+      # println(norm(C_k*ones(m+n)))
+      D3Fxm = D3*generic_solver.Fxm
+      d = similar(generic_solver.fulld)
+	ldiv!(d, LDLT, D3Fxm)
+      generic_solver.fulld = D3*d
+      #ldiv!(generic_solver.fulld, LDLT, generic_solver.Fxm)
+      # Suitesparse generic_solver.fulld = LDLT \ generic_solver.Fxm
+      #println(norm(generic_solver.fulld))
+	return LDLT
 end
 
 """
@@ -252,9 +265,11 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MINRESS
                             in_conlim :: AbstractFloat, :: Val{false})
 	generic_solver.Fxm .= generic_solver.Fx
 	generic_solver.Fxm .*= -1
+      T = eltype(generic_solver.x)
 	P = ldl(Symmetric(triu(generic_solver.A), :U))
 	P.D .= abs.(P.D)
-	minres!(generic_solver.in_solver, generic_solver.A, generic_solver.Fxm, 
-              M=P, rtol=in_rtol, itmax=in_itmax, conlim=in_conlim, ldiv=true)
+      # println("minresqlp")
+	minres!(generic_solver.in_solver, generic_solver.A, generic_solver.Fx,
+              M=P, rtol=zero(T), atol=zero(T), etol=zero(T), ldiv=true)
 	return generic_solver.in_solver
 end

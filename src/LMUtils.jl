@@ -66,6 +66,8 @@ function levenberg_marquardt_log_header(logging :: IO, model :: AbstractNLSModel
   @printf(logging, "|---------------------------------------------------------------------------------------------------------------|\n")
 end
 
+# !!! Bad estimation of Jcond from Krylov !!!
+
 """
 Row of Levenberg Marquardt logs
 """

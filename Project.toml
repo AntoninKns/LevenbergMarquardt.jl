@@ -4,6 +4,7 @@ authors = ["AntoninKns <antonin.kenens@polymtl.ca>"]
 version = "0.1.0"
 
 [deps]
+Arpack = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97"
 BundleAdjustmentModels = "0bf3e898-7c79-4b38-9ca6-2d9cc6573905"
 CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -21,6 +22,7 @@ Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 ReverseADNLSModels = "1cd4cf3a-ab95-428b-afc2-fde2104d3d9d"
 ReverseDiff = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
+RipQP = "1e40b3f8-35eb-4cd8-8edd-3e515bb9de08"
 SolverBenchmark = "581a75fa-a23a-52d0-a590-d6201de2218a"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SparseDiffTools = "47a9eef4-7e08-11e9-0b38-333d64bd3804"
