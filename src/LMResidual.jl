@@ -1,7 +1,7 @@
 """
     solver.Fx = residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, ADSolver})
 
-Calculate F(xk) = 1/2 ‖f(xk)‖².
+Calculate F(xk) = ½‖f(xk)‖².
 """
 function residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, ADSolver})
   residual!(model, x, solver.Fx)
@@ -11,7 +11,7 @@ end
 """
     solver.Fx = residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{GPUSolver})
 
-Calculate F(xk) = 1/2 ‖f(xk)‖² and copy it to GPU vector.
+Calculate F(xk) = ½‖f(xk)‖² and copy it to GPU vector.
 """
 function residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{GPUSolver})
   residual!(model, x, solver.Fx)
@@ -22,8 +22,8 @@ end
 """
     solver.Fx = residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, ADSolver})
 
-Calculate F(xk) = 1/2 ‖f(xk)‖² and then create vector [F(xk)].
-                                                      [  0  ]
+Calculate F(xk) = ½‖f(xk)‖² and then create vector [F(xk)].
+                                                   [  0  ]
 """
 function residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LDLSolver, MINRESSolver})
   m = model.nls_meta.nequ
@@ -38,7 +38,7 @@ end
 """
     solver.Fx = residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, ADSolver})
 
-Calculate F(xk+1) = 1/2 ‖f(xk+1)‖².
+Calculate F(xk+1) = ½‖f(xk+1)‖².
 """
 function residualLMp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{LMSolver, ADSolver})
   residual!(model, xp, solver.Fxp)
@@ -48,7 +48,7 @@ end
 """
     solver.Fx = residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{GPUSolver})
 
-Calculate F(xk+1) = 1/2 ‖f(xk+1)‖² and copy it to GPU vector.
+Calculate F(xk+1) = ½‖f(xk+1)‖² and copy it to GPU vector.
 """
 function residualLMp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{GPUSolver})
   residual!(model, xp, solver.Fxp)
@@ -59,8 +59,8 @@ end
 """
     solver.Fx = residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, ADSolver})
 
-Calculate F(xk+1) = 1/2 ‖f(xk+1)‖² and then create vector [F(xk+1)].
-                                                          [  0    ]
+Calculate F(xk+1) = ½‖f(xk+1)‖² and then create vector [F(xk+1)].
+                                                       [  0    ]
 """
 function residualLMp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{LDLSolver, MINRESSolver})
   m = model.nls_meta.nequ

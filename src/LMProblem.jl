@@ -4,7 +4,7 @@
 																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
 																									in_conlim :: AbstractFloat, :: Val{true})
 
-Solve the sub problem minimize ‖J(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm.
+Solve the sub problem minimize ½‖J(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm.
 Using LSMR iterative method and Δ as trust region radius.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: Union{LMSolver, ADSolver}, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
@@ -24,7 +24,7 @@ end
 																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
 																									in_conlim :: AbstractFloat, :: Val{false})
 
-Solve the sub problem minimize ‖J(xk) d + F(xk)‖² + λ²‖d‖² of Levenberg Marquardt Algorithm.
+Solve the sub problem minimize ½(‖J(xk) d + F(xk)‖² + λ²‖d‖²) of Levenberg Marquardt Algorithm.
 Using LSMR iterative method and λ as regularization parameter.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: Union{LMSolver, ADSolver}, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
@@ -44,7 +44,7 @@ end
 																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
 																									in_conlim :: AbstractFloat, :: Val{true})
 
-Solve the sub problem minimize ‖J(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm on GPU.
+Solve the sub problem minimize ½‖J(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm on GPU.
 Using LSMR iterative method and Δ as trust region radius.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: GPUSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
@@ -64,7 +64,7 @@ end
 																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
 																									in_conlim :: AbstractFloat, :: Val{false})
 
-Solve the sub problem minimize ‖J(xk) d + F(xk)‖² + λ²‖d‖² of Levenberg Marquardt Algorithm on GPU.
+Solve the sub problem minimize ½(‖J(xk) d + F(xk)‖² + λ²‖d‖²) of Levenberg Marquardt Algorithm on GPU.
 Using LSMR iterative method and λ as regularization parameter.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: GPUSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
@@ -84,7 +84,7 @@ end
 																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
 																									in_conlim :: AbstractFloat, :: Val{true})
 
-Solve the sub problem minimize ‖J(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm.
+Solve the sub problem minimize ½‖J(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm.
 Using iterative refinement on LSMR iterative method and Δ as trust region radius.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
@@ -130,7 +130,7 @@ end
 																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
 																									in_conlim :: AbstractFloat, :: Val{false})
 
-Solve the sub problem minimize ‖J(xk) d + F(xk)‖² + λ²‖d‖² of Levenberg Marquardt Algorithm.
+Solve the sub problem minimize ½(‖J(xk) d + F(xk)‖² + λ²‖d‖²) of Levenberg Marquardt Algorithm.
 Using iterative refinement on LSMR iterative method and λ as regularization parameter.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
@@ -176,7 +176,7 @@ end
 																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
 																									in_conlim :: AbstractFloat, :: Val{true})
 
-Solve the sub problem minimize ‖J(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm on GPU.
+Solve the sub problem minimize ½‖J(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm on GPU.
 Using iterative refinement on LSMR iterative method and Δ as trust region radius.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPGPUSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
@@ -225,7 +225,7 @@ end
 																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
 																									in_conlim :: AbstractFloat, :: Val{false})
 
-Solve the sub problem minimize ‖J(xk) d + F(xk)‖² + λ²‖d‖² of Levenberg Marquardt Algorithm on GPU.
+Solve the sub problem minimize ½(‖J(xk) d + F(xk)‖² + λ²‖d‖²) of Levenberg Marquardt Algorithm on GPU.
 Using iterative refinement on LSMR iterative method and λ as regularization parameter.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPGPUSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
@@ -307,7 +307,7 @@ generic_solver.in_solver = solve_sub_problem!(model :: AbstractNLSModel, generic
 																							in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
 																							in_conlim :: AbstractFloat, :: Val{false})
 
-Solve the sub problem minimize ‖A(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm with LDL factorization preconditioner.
+Solve the sub problem minimize ½‖A(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm with LDL factorization preconditioner.
 Where A(xk) = [I     J(xₖ)]
 							[J(xₖ)ᵀ  -λI]
 """
