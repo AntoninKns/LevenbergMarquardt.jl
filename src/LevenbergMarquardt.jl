@@ -18,11 +18,6 @@ include("LMStepUpdate.jl")
 include("LMResidual.jl")
 include("LMJacobian.jl")
 include("LMProblem.jl")
-
-include("temp/ReverseADNLSfromBAM.jl")
-include("temp/Partitions.jl")
-include("temp/LevenbergMarquardtPreconditioner.jl")
-
 include("LMAlgorithm.jl")
 
 end

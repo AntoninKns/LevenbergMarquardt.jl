@@ -172,43 +172,15 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
                                           zero(T), zero(T), zero(T), "null", 
                                           zero(T), Val(solver.TR)))
 
-  DMAX = []
-  ACOND = []
-
   while !(optimal || small_residual || tired)
 
     # Time of the step for the log
     start_step_time = time()
 
     # Solve the subproblem min 1/2 ‖Jx*d + Fx‖^2 #a corriger
-    LDLT = solve_sub_problem!(model, generic_solver, in_axtol, in_btol, in_atol, 
+    solve_sub_problem!(model, generic_solver, in_axtol, in_btol, in_atol, 
                        in_rtol, in_etol, in_itmax, in_conlim, Val(solver.TR))
 
-    if iter % 10 == 0
-    #if iter > 68
-#=       stats = solver.in_solver.stats
-      println("Residus itérations MINRES")
-      println(stats.residuals)
-      println("Aresidus itérations MINRES")
-      println(stats.Aresiduals)
-      println("Acond itérations MINRES")
-      println(stats.Acond)
-      println(size(solver.A))
-      println(Vector{Float64}(abs.(eigs(solver.A)[1]))) =#
-#=       dmax = findmax(LDLT.D)
-      push!(DMAX, dmax[1])
-      println(DMAX) =#
-#=       D = diag(LDLT.D)
-      println(findmax(D))
-      println(findmin(D)) =#
-#=       Acond = cond(sparse(Symmetric(solver.A)), Inf)
-      push!(ACOND, Acond)
-      println(ACOND) =#
-#=       n = model.meta.nvar
-      A = sparse(vcat(solver.rows, 1:n), vcat(solver.cols, 1:n), vcat(solver.vals, solver.λ*ones(n)))
-      println(cond(A'*A, Inf)) =#
-      #println(norm(generic_solver.fulld))
-    end
     # Calculate ‖d‖, xk+1, F(xk+1) and ‖F(xk+1)‖
     d = step!(model, solver)
     dNorm = norm(d)

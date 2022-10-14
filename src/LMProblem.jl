@@ -1,6 +1,11 @@
 """
-Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
-Adapting if using a regularized or trust region version
+		generic_solver.in_solver = solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: Union{LMSolver, ADSolver}, 
+																									in_axtol :: AbstractFloat, in_btol :: AbstractFloat, in_atol :: AbstractFloat, 
+																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+																									in_conlim :: AbstractFloat, :: Val{true})
+
+Solve the sub problem minimize ‖J(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm.
+Using LSMR iterative method and Δ as trust region radius.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: Union{LMSolver, ADSolver}, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
@@ -14,8 +19,13 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: Union{L
 end
 
 """
-Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
-Adapting if using a regularized or trust region version
+		generic_solver.in_solver = solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: Union{LMSolver, ADSolver}, 
+																									in_axtol :: AbstractFloat, in_btol :: AbstractFloat, in_atol :: AbstractFloat, 
+																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+																									in_conlim :: AbstractFloat, :: Val{false})
+
+Solve the sub problem minimize ‖J(xk) d + F(xk)‖² + λ²‖d‖² of Levenberg Marquardt Algorithm.
+Using LSMR iterative method and λ as regularization parameter.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: Union{LMSolver, ADSolver}, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
@@ -29,8 +39,13 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: Union{L
 end
 
 """
-Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
-Adapting if using a regularized or trust region version
+		generic_solver.in_solver = solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: GPUSolver,
+																									in_axtol :: AbstractFloat, in_btol :: AbstractFloat, in_atol :: AbstractFloat, 
+																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+																									in_conlim :: AbstractFloat, :: Val{true})
+
+Solve the sub problem minimize ‖J(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm on GPU.
+Using LSMR iterative method and Δ as trust region radius.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: GPUSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
@@ -44,8 +59,13 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: GPUSolv
 end
 
 """
-Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
-Adapting if using a regularized or trust region version
+		generic_solver.in_solver = solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: GPUSolver, 
+																									in_axtol :: AbstractFloat, in_btol :: AbstractFloat, in_atol :: AbstractFloat, 
+																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+																									in_conlim :: AbstractFloat, :: Val{false})
+
+Solve the sub problem minimize ‖J(xk) d + F(xk)‖² + λ²‖d‖² of Levenberg Marquardt Algorithm on GPU.
+Using LSMR iterative method and λ as regularization parameter.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: GPUSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
@@ -59,8 +79,13 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: GPUSolv
 end
 
 """
-Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
-Adapting if using a regularized or trust region version
+		generic_solver.in_solver = solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPSolver, 
+																									in_axtol :: AbstractFloat, in_btol :: AbstractFloat, in_atol :: AbstractFloat, 
+																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+																									in_conlim :: AbstractFloat, :: Val{true})
+
+Solve the sub problem minimize ‖J(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm.
+Using iterative refinement on LSMR iterative method and Δ as trust region radius.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
@@ -100,8 +125,13 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPSolve
 end
 
 """
-Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
-Adapting if using a regularized or trust region version
+		generic_solver.in_solver = solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPSolver,
+																									in_axtol :: AbstractFloat, in_btol :: AbstractFloat, in_atol :: AbstractFloat, 
+																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+																									in_conlim :: AbstractFloat, :: Val{false})
+
+Solve the sub problem minimize ‖J(xk) d + F(xk)‖² + λ²‖d‖² of Levenberg Marquardt Algorithm.
+Using iterative refinement on LSMR iterative method and λ as regularization parameter.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
@@ -141,8 +171,13 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPSolve
 end
 
 """
-Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
-Adapting if using a regularized or trust region version
+		generic_solver.in_solver = solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPGPUSolver, 
+																									in_axtol :: AbstractFloat, in_btol :: AbstractFloat, in_atol :: AbstractFloat, 
+																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+																									in_conlim :: AbstractFloat, :: Val{true})
+
+Solve the sub problem minimize ‖J(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm on GPU.
+Using iterative refinement on LSMR iterative method and Δ as trust region radius.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPGPUSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
@@ -185,8 +220,13 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPGPUSo
 end
 
 """
-Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
-Adapting if using a regularized or trust region version
+		generic_solver.in_solver = solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPGPUSolver,
+																									in_axtol :: AbstractFloat, in_btol :: AbstractFloat, in_atol :: AbstractFloat, 
+																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+																									in_conlim :: AbstractFloat, :: Val{false})
+
+Solve the sub problem minimize ‖J(xk) d + F(xk)‖² + λ²‖d‖² of Levenberg Marquardt Algorithm on GPU.
+Using iterative refinement on LSMR iterative method and λ as regularization parameter.
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPGPUSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
@@ -229,8 +269,13 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPGPUSo
 end
 
 """
-Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
-Adapting if using a regularized or trust region version
+generic_solver.in_solver = solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: LDLSolver,
+																							in_axtol :: AbstractFloat, in_btol :: AbstractFloat, in_atol :: AbstractFloat, 
+																							in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+																							in_conlim :: AbstractFloat, :: Val{false})
+
+Solve the sub problem [I     J(xₖ)] d = [F(xₖ)] of Levenberg Marquardt Algorithm
+											[J(xₖ)ᵀ  -λI]	    [  0  ]
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: LDLSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
@@ -257,8 +302,14 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: LDLSolv
 end
 
 """
-Solve the sub problem min ‖Jx*d + Fx‖^2 of Levenberg Marquardt Algorithm
-Adapting if using a regularized or trust region version
+generic_solver.in_solver = solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MINRESSolver,
+																							in_axtol :: AbstractFloat, in_btol :: AbstractFloat, in_atol :: AbstractFloat, 
+																							in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+																							in_conlim :: AbstractFloat, :: Val{false})
+
+Solve the sub problem minimize ‖A(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm with LDL factorization preconditioner.
+Where A(xk) = [I     J(xₖ)]
+							[J(xₖ)ᵀ  -λI]
 """
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MINRESSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 

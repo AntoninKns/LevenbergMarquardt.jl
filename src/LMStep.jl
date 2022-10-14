@@ -94,19 +94,7 @@ function pred(model :: AbstractNLSModel, solver :: Union{LDLSolver, MINRESSolver
   T = eltype(solver.x)
   @views fill!(solver.fulld[1:m], zero(T))
   mul!(solver.Ju, solver.A, solver.fulld)
-#=   println("||J(x)*d||:")
-  println(norm(solver.Ju[1:m]))
-  println("||F(x)||:")
-  println(norm(solver.Fx[1:m])) =#
   @views solver.Ju[1:m] .= solver.Ju[1:m] .+ solver.Fx[1:m]
   @views normJu = norm(solver.Ju[1:m])
-#=   println("||d||^2:")
-  println(dNorm^2)
-  println("||λ||^2:")
-  println(solver.λ^2)
-  println("||J(x) *d + F(x)||^2:")
-  println(normJu^2)
-  println("||F(x)||^2:")
-  println(rNorm^2) =#
   return rNorm^2 - (normJu^2 + solver.λ^2*dNorm^2)
 end

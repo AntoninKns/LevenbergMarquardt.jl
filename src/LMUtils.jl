@@ -1,5 +1,7 @@
 """
-Shortens status log of Levenberg Marquardt subproblem
+    status = change_stats(solver :: Union{LMSolver, ADSolver, GPUSolver, MINRESSolver})
+
+Shortens status log of Levenberg Marquardt subproblem.
 """
 function change_stats(solver :: Union{LMSolver, ADSolver, GPUSolver, MINRESSolver})
   status = solver.in_solver.stats.status
@@ -26,14 +28,20 @@ function change_stats(solver :: Union{LMSolver, ADSolver, GPUSolver, MINRESSolve
 end
 
 """
-Shortens status log of Levenberg Marquardt subproblem
+    status = change_stats(solver :: LDLSolver)
+
+Create status name for LDL factorization
 """
 function change_stats(solver :: LDLSolver)
   return "LDL"
 end
 
 """
-Header of Levenberg Marquardt logs
+    levenberg_marquardt_log_header(logging :: IO, model :: AbstractNLSModel, solver :: AbstractLMSolver, η₁ :: AbstractFloat, η₂ :: AbstractFloat, 
+                                    σ₁ :: AbstractFloat, σ₂ :: AbstractFloat, max_eval :: Integer, restol :: AbstractFloat, res_rtol :: AbstractFloat, 
+                                    atol :: AbstractFloat, rtol :: AbstractFloat, in_rtol :: AbstractFloat, in_itmax :: Integer, in_conlim, :: Val{true})
+
+Header of Levenberg Marquardt logs for trust region version.
 """
 function levenberg_marquardt_log_header(logging :: IO, model :: AbstractNLSModel, solver :: AbstractLMSolver, η₁ :: AbstractFloat, η₂ :: AbstractFloat, 
                                               σ₁ :: AbstractFloat, σ₂ :: AbstractFloat, max_eval :: Integer, restol :: AbstractFloat, res_rtol :: AbstractFloat, 
@@ -50,7 +58,11 @@ function levenberg_marquardt_log_header(logging :: IO, model :: AbstractNLSModel
 end
 
 """
-Header of Levenberg Marquardt logs
+    levenberg_marquardt_log_header(logging :: IO, model :: AbstractNLSModel, solver :: AbstractLMSolver, η₁ :: AbstractFloat, η₂ :: AbstractFloat, 
+                                    σ₁ :: AbstractFloat, σ₂ :: AbstractFloat, max_eval :: Integer, restol :: AbstractFloat, res_rtol :: AbstractFloat, 
+                                    atol :: AbstractFloat, rtol :: AbstractFloat, in_rtol :: AbstractFloat, in_itmax :: Integer, in_conlim, :: Val{false})
+
+Header of Levenberg Marquardt logs for regularized version.
 """
 function levenberg_marquardt_log_header(logging :: IO, model :: AbstractNLSModel, solver :: AbstractLMSolver, η₁ :: AbstractFloat, η₂ :: AbstractFloat, 
                                               σ₁ :: AbstractFloat, σ₂ :: AbstractFloat, max_eval :: Integer, restol :: AbstractFloat, res_rtol :: AbstractFloat, 
@@ -66,10 +78,12 @@ function levenberg_marquardt_log_header(logging :: IO, model :: AbstractNLSModel
   @printf(logging, "|---------------------------------------------------------------------------------------------------------------|\n")
 end
 
-# !!! Bad estimation of Jcond from Krylov !!!
-
 """
-Row of Levenberg Marquardt logs
+    levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver}, iter :: Integer, rNorm :: AbstractFloat, 
+                                ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
+                                inner_status :: String, step_time :: AbstractFloat, ::Val{true})
+
+Row of Levenberg Marquardt logs for trust region version. Estimation of Jcond is not accurate.
 """
 function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver}, iter :: Integer, rNorm :: AbstractFloat, 
                                       ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
@@ -81,7 +95,11 @@ function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, s
 end
 
 """
-Row of Levenberg Marquardt logs
+    levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver}, iter :: Integer, rNorm :: AbstractFloat, 
+                                ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
+                                inner_status :: String, step_time :: AbstractFloat, ::Val{false})
+
+Row of Levenberg Marquardt logs for regularized version. Estimation of Jcond is not accurate.
 """
 function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver}, iter :: Integer, rNorm :: AbstractFloat, 
                                       ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
@@ -93,7 +111,11 @@ function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, s
 end
 
 """
-Row of Levenberg Marquardt logs
+    levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: LDLSolver, iter :: Integer, rNorm :: AbstractFloat, 
+                                ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
+                                inner_status :: String, step_time :: AbstractFloat, ::Val{false})
+
+Row of Levenberg Marquardt logs for regularized version. Jcond is not available and no inner iteration.
 """
 function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: LDLSolver, iter :: Integer, rNorm :: AbstractFloat, 
                                       ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
@@ -106,7 +128,11 @@ function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, s
 end
 
 """
-Row of Levenberg Marquardt logs
+    levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: MINRESSolver, iter :: Integer, rNorm :: AbstractFloat, 
+                                ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
+                                inner_status :: String, step_time :: AbstractFloat, ::Val{false})
+
+Row of Levenberg Marquardt logs for regularized version. Jcond is not available.
 """
 function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: MINRESSolver, iter :: Integer, rNorm :: AbstractFloat, 
                                       ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
