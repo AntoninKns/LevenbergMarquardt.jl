@@ -1,24 +1,86 @@
+# Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
+# LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
+
 export levenberg_marquardt, levenberg_marquardt!
 
 """
-Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
-LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
+    stats = levenberg_marquardt(model      :: AbstractNLSModel; 
+                                which      :: Symbol=:DEFAULT,
+                                precisions :: Dict = Dict("F32" => true, "F64" => true),
+                                TR         :: Bool = false,
+                                λ          :: T = zero(T),
+                                Δ          :: T = T(1e4),
+                                λmin       :: T = T(1e-1),
+                                η₁         :: T = T(eps(T)^(1/4)),
+                                η₂         :: T = T(0.99),
+                                σ₁         :: T = T(10.0),
+                                σ₂         :: T = T(0.1),
+                                max_eval   :: Int = 2500,
+                                restol     :: T = T(eps(T)^(1/3)),
+                                res_rtol   :: T = T(eps(T)^(1/3)),
+                                atol       :: T = zero(T), 
+                                rtol       :: T = T(eps(T)^(1/3)),
+                                in_axtol   :: T = zero(T),
+                                in_btol    :: T = zero(T),
+                                in_atol    :: T = zero(T),
+                                in_rtol    :: T = T(eps(T)^(1/3)),
+                                in_etol    :: T = zero(T),
+                                in_itmax   :: Int = 0,
+                                in_conlim  :: T = 1/√eps(T),
+                                verbose    :: Bool = true,
+                                logging    :: IO = stdout)
+
+`T` is an `AbstractFloat` such as `Float32`, `Float64` or `BigFloat`.
+`S` is `Vector{T}`.
+`ST is the type of the internal solver. For which=:DEFAULT, `ST` is `LsmrSolver{T, T, S}`.
+
+`which` determines the version of the LevenbergMarquardt algorithm.
+
+`which = :DEFAULT` solves the subproblem with the LSMR iterative method on CPU in the precision given in the model.
+
+`which = :GPU` solves the subproblem with LSMR iterative method on GPU in the precision given in the model.
+The rest of the algorithm runs on CPU. Currently, only Nvidia GPUs running with CUDA are supported.
+
+`which = :LDL` solves the augmented subproblem with LDL factorization in the precision given in the model.
+
+`which = :MP` solves the subproblem with LSMR iterative method following iterative refinement strategy with 
+precisions given in `precisions` dictionary. Currently, only 2 precisions are supported.
+
+`which = :MPGPU` is a combination of `:MP` and `:GPU`, solving the subproblem on GPU with iterative refinement strategy.
+
+`which = :MINRES` solves the augmented subproblem with MINRES iterative method using a preconditioner formed
+either through LDL factorization or limited LDL factorization. The code runs on CPU in the precision givne in the model.
+
+
+`precisions` determines the precisions used for the `:MP` and `:MPGPU` versions.
+
+`TR` determines if a regularized or trust region version of the algorithm is used. 
+`λ` and `Δ` then determine the initial value of the chosne version.
+`λmin` determines the minimum value tha can be attained by `λ` before being set to 0.
+
+`η₁` and `η₂` determine the value for which we consider a step to be either unsuccessful, successsful or very successsful.
+`σ₁` and `σ₂` then determine the value by which the parameter (`λ` or `Δ`) is multiplied.
+
+`max_eval`, `restol`, `res_rtol`, `atol` and `rtol` are the stopping criterias of the Levenberg-Marquardt algorithm.
+
+`in_axtol`, `in_btol`, `in_atol`, `in_rtol`, `in_etol`, `in_itmax` and `in_conlim` are the stopping criterias of the subproblem
+in the Levenberg-Marquardt algorithm. If a direct method such as `:LDL` is used, the stopping criterias are ignored.
 """
-function levenberg_marquardt(model :: AbstractNLSModel; version :: Symbol = :DEFAULT, precisions :: Dict = Dict("F32" => true, "F64" => true), kwargs...)
+function levenberg_marquardt(model :: AbstractNLSModel; which :: Symbol = :DEFAULT, precisions :: Dict = Dict("F32" => true, "F64" => true), kwargs...)
   # Adapting the solver depending on the wanted version
-  if version == :DEFAULT
+  if which == :DEFAULT
     generic_solver = LMSolver(model)
-  elseif version == :GPU
+  elseif which == :GPU
     CUDA.allowscalar(false)
     generic_solver = GPUSolver(model)
-  elseif version == :LDL
+  elseif which == :LDL
     generic_solver = LDLSolver(model)
-  elseif version == :MP
+  elseif which == :MP
     generic_solver = MPSolver(model, precisions)
-  elseif version == :MPGPU
+  elseif which == :MPGPU
     CUDA.allowscalar(false)
     generic_solver = MPGPUSolver(model, precisions)
-  elseif version == :MINRES
+  elseif which == :MINRES
     generic_solver = MINRESSolver(model)
   else
     error("Could not recognize Levenberg-Marquardt version. Available versions are given in the docstring of the function.")
@@ -37,9 +99,9 @@ end
 Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
 LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
 """
-function levenberg_marquardt(model :: ReverseADNLSModel; version :: Symbol = :DEFAULT, kwargs...)
+function levenberg_marquardt(model :: ReverseADNLSModel; which :: Symbol = :DEFAULT, kwargs...)
   # Adapting the solver depending on the wanted version
-  if version == :DEFAULT
+  if which == :DEFAULT
     solver = ADSolver(model)
   else
     error("Could not recognize Levenberg-Marquardt version. Available versions are given in the docstring of the function.")

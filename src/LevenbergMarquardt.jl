@@ -7,7 +7,7 @@ using SparseArrays
 using LDLFactorizations, LimitedLDLFactorizations
 using CUDA, CUDA.CUSPARSE
 using Arpack
-using RipQP
+using OperatorScaling
 
 include("LMStats.jl")
 include("solvers/AbstractLMSolver.jl")

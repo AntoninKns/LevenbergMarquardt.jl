@@ -241,9 +241,9 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: LDLSolv
 	generic_solver.Fxm .= generic_solver.Fx
 	generic_solver.Fxm .*= -1 
 	Au = Symmetric(triu(generic_solver.A), :U)
-      D3 = Diagonal(ones(m+n))
+      D3 = Diagonal{T}(undef, m+n)
       C_k = Diagonal{T}(undef, m+n)
-      RipQP.equilibrate!(Au, D3, C_k; ϵ=T(1e-6))
+      equilibrate!(Au, D3, C_k; ϵ=T(1e-6))
 	LDLT = ldl(Au)
       # println(norm(C_k*ones(m+n)))
       D3Fxm = D3*generic_solver.Fxm
