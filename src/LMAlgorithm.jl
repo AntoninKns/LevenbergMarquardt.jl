@@ -71,6 +71,7 @@ function levenberg_marquardt(model :: AbstractNLSModel; which :: Symbol = :DEFAU
   if which == :DEFAULT
     generic_solver = LMSolver(model)
   elseif which == :GPU
+    # If the code is run on GPU, indexing elemnts are forbidden.
     CUDA.allowscalar(false)
     generic_solver = GPUSolver(model)
   elseif which == :LDL
@@ -78,6 +79,7 @@ function levenberg_marquardt(model :: AbstractNLSModel; which :: Symbol = :DEFAU
   elseif which == :MP
     generic_solver = MPSolver(model, precisions)
   elseif which == :MPGPU
+    # If the code is run on GPU, indexing elemnts are forbidden.
     CUDA.allowscalar(false)
     generic_solver = MPGPUSolver(model, precisions)
   elseif which == :MINRES
@@ -95,10 +97,6 @@ function levenberg_marquardt(model :: AbstractNLSModel; which :: Symbol = :DEFAU
   end
 end
 
-"""
-Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
-LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
-"""
 function levenberg_marquardt(model :: ReverseADNLSModel; which :: Symbol = :DEFAULT, kwargs...)
   # Adapting the solver depending on the wanted version
   if which == :DEFAULT
@@ -111,8 +109,11 @@ function levenberg_marquardt(model :: ReverseADNLSModel; which :: Symbol = :DEFA
 end
 
 """
-Algorithm of Levenberg Marquardt based on "AN INEXACT LEVENBERG-MARQUARDT METHOD FOR
-LARGE SPARSE NONLINEAR LEAST SQUARES" from Wright and Holt
+    generic_solver = levenberg_marquardt!(generic_solver::Union{AbstractLMSolver, MPSolver, MPGPUSolver}, model::AbstractNLSModel; kwargs...)
+
+where `kwargs` are keyword arguments of [`levenberg_marquardt`](@ref).
+
+`generic_solver` is either an `AbstractLMSolver` or a wrapper like `MPSolver` or `MPGPUSolver` that contains multiple `AbstractLMSolver`.
 """
 function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, MPSolver{T,S,ST}, MPGPUSolver{T,S,ST}},
                               model     :: AbstractNLSModel;

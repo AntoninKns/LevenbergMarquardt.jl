@@ -1,9 +1,10 @@
 
 """
-Set the first value of the linear operator for the Jacobian
-Works with sparse manually calculated jacobian or automatic differentiation
+    solver.Jx = set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: LMSolver)
+
+Set the first value of the linear operator for the Jacobian.
 """
-function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, MPSolver})
+function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: LMSolver)
   jac_structure_residual!(model, solver.rows, solver.cols)
   jac_coord_residual!(model, x, solver.vals)
   solver.Jx = jac_op_residual!(model, solver.rows, solver.cols, solver.vals, solver.Jv, solver.Jtv)
@@ -12,8 +13,9 @@ end
 
 
 """
-Set the first value of the linear operator for the Jacobian
-Works with sparse manually calculated jacobian or automatic differentiation
+    solver.Jx = set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: ADSolver)
+
+Set the first value of the linear operator for the Jacobian using automatic differentiation.
 """
 function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: ADSolver)
   solver.Jx = jac_op_residual!(model, x, solver.Jv, solver.Jtv)
@@ -21,10 +23,12 @@ function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solve
 end
 
 """
-Set the first value of the linear operator for the Jacobian
-Works with sparse manually calculated jacobian or automatic differentiation
+    solver.Jx = set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: GPUSolver)
+
+Set the first value of the Jacobian for CPU and GPU calculations. 
+For the sake of code genericity only `solver.Jx` is returned but `solver.GPUJx` is also calculated.
 """
-function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{GPUSolver, MPGPUSolver})
+function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: GPUSolver)
   jac_structure_residual!(model, solver.rows, solver.cols)
   jac_coord_residual!(model, x, solver.vals)
   copyto!(solver.GPUrows, solver.rows)
@@ -36,8 +40,21 @@ function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solve
 end
 
 """
-Set the first value of the linear operator for the Jacobian
-Works with sparse manually calculated jacobian or automatic differentiation
+    solver.A = set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: LDLSolver)
+
+Set the first value of the augmented matrix for LDL factorization.
+
+The augmented matrix should have the following structure:
+
+[I     J]
+[J^T -λI]
+
+In this function we only calculate:
+
+[I   J]
+[0 -λI]
+
+We then use a `Symmetric` wrapper to make it symmetric.
 """
 function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: LDLSolver)
   m = model.nls_meta.nequ
@@ -67,8 +84,14 @@ function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solve
 end
 
 """
-Set the first value of the linear operator for the Jacobian
-Works with sparse manually calculated jacobian or automatic differentiation
+    solver.A = set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: MINRESSolver)
+
+Set the first value of the augmented matrix for MINRES resolution.
+
+The augmented matrix has the following structure:
+  
+[I     J]
+[J^T -λI]
 """
 function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: MINRESSolver)
   m = model.nls_meta.nequ
@@ -102,18 +125,20 @@ function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solve
 end
 
 """
-Update the linear operator for the jacobian
-Works with sparse manually calculated jacobian or automatic differentiation
+    solver.Jx = update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: LMSolver)
+
+Update the linear operator for the Jacobian.
 """
-function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, MPSolver})
+function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: LMSolver)
   jac_coord_residual!(model, x, solver.vals)
   solver.Jx = jac_op_residual!(model, solver.rows, solver.cols, solver.vals, solver.Jv, solver.Jtv)
   return solver.Jx
 end
 
 """
-Update the linear operator for the jacobian
-Works with sparse manually calculated jacobian or automatic differentiation
+    solver.Jx = update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: ADSolver)
+
+Update the linear operator for the Jacobian using automatic differentiation.
 """
 function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: ADSolver)
   solver.Jx = jac_op_residual!(model, x, solver.Jv, solver.Jtv)
@@ -121,10 +146,12 @@ function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, so
 end
 
 """
-Update the linear operator for the jacobian
-Works with sparse manually calculated jacobian or automatic differentiation
+    solver.Jx = update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: GPUSolver)
+
+Update the Jacobian for CPU and GPU calculations. 
+For the sake of code genericity only `solver.Jx` is returned but `solver.GPUJx` is also calculated.
 """
-function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{GPUSolver, MPGPUSolver})
+function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: GPUSolver)
   jac_coord_residual!(model, x, solver.vals)
   copyto!(solver.GPUrows, solver.rows)
   copyto!(solver.GPUcols, solver.cols)
@@ -135,8 +162,21 @@ function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, so
 end
 
 """
-Set the first value of the linear operator for the Jacobian
-Works with sparse manually calculated jacobian or automatic differentiation
+    solver.A = update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: LDLSolver)
+
+Update the augmented matrix for LDL factorization.
+
+The augmented matrix should have the following structure:
+
+[I     J]
+[J^T -λI]
+
+In this function we only calculate:
+
+[I   J]
+[0 -λI]
+
+We then use a `Symmetric` wrapper to make it symmetric.
 """
 function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: LDLSolver)
   m = model.nls_meta.nequ
@@ -161,8 +201,14 @@ function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, so
 end
 
 """
-Set the first value of the linear operator for the Jacobian
-Works with sparse manually calculated jacobian or automatic differentiation
+    solver.A = update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: MINRESSolver)
+    
+Update the augmented matrix for MINRES resolution.
+
+The augmented matrix has the following structure:
+  
+[I     J]
+[J^T -λI]
 """
 function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: MINRESSolver)
   m = model.nls_meta.nequ
@@ -190,10 +236,34 @@ function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, so
   return solver.A
 end
 
-function update_lambda!(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver})
+"""
+    solver.Jx = update_lambda!(model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver})
+
+Update λ in case of a good or very good step.
+"""
+function update_lambda!(model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver})
+  # For these solvers, λ is updated directly in the subproblem, this function exists only
+  # for better code genericity
   return solver.Jx
 end
 
+"""
+    solver.A = update_lambda!(model :: AbstractNLSModel, solver :: LDLSolver)
+
+Update λ in the augmented matrix for LDL factorization.
+
+The augmented matrix should have the following structure:
+
+[I     J]
+[J^T -λI]
+
+In this function we only calculate:
+
+[I   J]
+[0 -λI]
+
+We then use a `Symmetric` wrapper to make it symmetric.
+"""
 function update_lambda!(model :: AbstractNLSModel, solver :: LDLSolver)
   m = model.nls_meta.nequ
   n = model.meta.nvar
@@ -204,6 +274,16 @@ function update_lambda!(model :: AbstractNLSModel, solver :: LDLSolver)
   return solver.A
 end
 
+"""
+    solver.A = update_lambda!(model :: AbstractNLSModel, solver :: MINRESSolver)
+    
+Update λ in the augmented matrix for MINRES resolution.
+
+The augmented matrix has the following structure:
+  
+[I     J]
+[J^T -λI]
+"""
 function update_lambda!(model :: AbstractNLSModel, solver :: MINRESSolver)
   m = model.nls_meta.nequ
   n = model.meta.nvar
