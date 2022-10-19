@@ -58,7 +58,7 @@ end
     Pred = pred(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver}, 
                 rNorm :: AbstractFloat, dNorm :: AbstractFloat, :: Val{true})
 
-Calculate Pred = ‖F(xk)‖² - (‖J(xk)*d + F(xk)‖² + λ²‖d‖²) in order to obtain ρ = Ared / Pred which determines the quality of the step.
+Calculate Pred = ‖F(xk)‖² - (‖J(xk)*d + F(xk)‖² + ‖d‖²) in order to obtain ρ = Ared / Pred which determines the quality of the step.
 """
 function pred(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver}, 
               rNorm :: AbstractFloat, dNorm :: AbstractFloat, :: Val{true})

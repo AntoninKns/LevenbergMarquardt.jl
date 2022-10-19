@@ -90,7 +90,7 @@ function levenberg_marquardt(model :: AbstractNLSModel; which :: Symbol = :DEFAU
 
   levenberg_marquardt!(generic_solver, model; kwargs...)
   
-  if version == :MP || version == :MPGPU
+  if which == :MP || which == :MPGPU
     return generic_solver.F64Solver.stats
   else
     return generic_solver.stats

@@ -37,10 +37,10 @@ function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{LDLSo
                         TR :: Bool, λ :: AbstractFloat, Δ :: AbstractFloat, λmin :: AbstractFloat)
   T = eltype(generic_solver.x)
   if TR
-    error("Impossible to use trust region with LDL factorization")
+    error("Impossible to use trust region with LDL factorization.")
   end
   if λ < 1e-10
-    @printf("λ is too small, LDL factorization cannot be computed, setting λ to 1 instead")
+    @printf("λ is too small, LDL factorization cannot be computed, setting λ to 1 instead.\n")
     λ = one(T)
   end
   x, d, xp, solver = generic_solver.x, generic_solver.d, generic_solver.xp, generic_solver

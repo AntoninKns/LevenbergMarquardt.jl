@@ -36,30 +36,30 @@ end
 
 @testset "test GPU algorithm" begin
   model = SimpleNLSModel()
-  stats = levenberg_marquardt(model, version = :GPU)
-  @test stats.rNorm ≤ 1e-5
+  stats = levenberg_marquardt(model, which = :GPU)
+  @test stats.status == :first_order || stats.status == :small_residual
 end
 
 @testset "test LDL algorithm" begin
   model = SimpleNLSModel()
-  stats = levenberg_marquardt(model, version = :LDL)
-  @test stats.rNorm ≤ 1e-5
+  stats = levenberg_marquardt(model, which = :LDL)
+  @test stats.status == :first_order || stats.status == :small_residual
 end
 
 @testset "test MINRES algorithm" begin
   model = SimpleNLSModel()
-  stats = levenberg_marquardt(model, version = :MINRES)
-  @test stats.rNorm ≤ 1e-5
+  stats = levenberg_marquardt(model, which = :MINRES)
+  @test stats.status == :first_order || stats.status == :small_residual
 end
 
 @testset "test MPGPU algorithm" begin
   model = SimpleNLSModel()
-  stats = levenberg_marquardt(model, version = :MPGPU)
-  @test stats.rNorm ≤ 1e-5
+  stats = levenberg_marquardt(model, which = :MPGPU)
+  @test stats.status == :first_order || stats.status == :small_residual
 end
 
 @testset "test MP algorithm" begin
   model = SimpleNLSModel()
-  stats = levenberg_marquardt(model, version = :MP)
-  @test stats.rNorm ≤ 1e-5
+  stats = levenberg_marquardt(model, which = :MP)
+  @test stats.status == :first_order || stats.status == :small_residual
 end
