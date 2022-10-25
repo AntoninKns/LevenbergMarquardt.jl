@@ -84,11 +84,18 @@ function levenberg_marquardt(model :: AbstractNLSModel; which :: Symbol = :DEFAU
     generic_solver = MPGPUSolver(model, precisions)
   elseif which == :MINRES
     generic_solver = MINRESSolver(model)
+  elseif which == :AUTO
+    ADmodel = ADBundleAdjustmentModel(model)
+    generic_solver = ADSolver(ADmodel)
   else
     error("Could not recognize Levenberg-Marquardt version. Available versions are given in the docstring of the function.")
   end
 
-  levenberg_marquardt!(generic_solver, model; kwargs...)
+  if which == :AUTO
+    levenberg_marquardt!(generic_solver, ADmodel; kwargs...)
+  else
+    levenberg_marquardt!(generic_solver, model; kwargs...)
+  end
   
   if which == :MP || which == :MPGPU
     return generic_solver.F64Solver.stats
