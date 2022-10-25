@@ -29,13 +29,16 @@ Set the first value of the Jacobian for CPU and GPU calculations.
 For the sake of code genericity only `solver.Jx` is returned but `solver.GPUJx` is also calculated.
 """
 function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: GPUSolver)
+  m = model.nls_meta.nequ
+  n = model.meta.nvar
+  nnzj = model.nls_meta.nnzj
   jac_structure_residual!(model, solver.rows, solver.cols)
   jac_coord_residual!(model, x, solver.vals)
   copyto!(solver.GPUrows, solver.rows)
   copyto!(solver.GPUcols, solver.cols)
   copyto!(solver.GPUvals, solver.vals)
-  solver.Jx = sparse(solver.rows, solver.cols, solver.vals)
-  solver.GPUJx = CuSparseMatrixCSC(solver.Jx)
+  solver.Jx = jac_op_residual!(model, solver.rows, solver.cols, solver.vals, solver.Jv, solver.Jtv)
+  solver.GPUJx = CuSparseMatrixCOO(solver.GPUrows, solver.GPUcols, solver.GPUvals, (m,n), nnzj)
   return solver.Jx
 end
 
@@ -152,12 +155,15 @@ Update the Jacobian for CPU and GPU calculations.
 For the sake of code genericity only `solver.Jx` is returned but `solver.GPUJx` is also calculated.
 """
 function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: GPUSolver)
+  m = model.nls_meta.nequ
+  n = model.meta.nvar
+  nnzj = model.nls_meta.nnzj
   jac_coord_residual!(model, x, solver.vals)
   copyto!(solver.GPUrows, solver.rows)
   copyto!(solver.GPUcols, solver.cols)
   copyto!(solver.GPUvals, solver.vals)
-  solver.Jx = sparse(solver.rows, solver.cols, solver.vals)
-  solver.GPUJx = CuSparseMatrixCSC(solver.Jx)
+  solver.Jx = jac_op_residual!(model, solver.rows, solver.cols, solver.vals, solver.Jv, solver.Jtv)
+  solver.GPUJx = CuSparseMatrixCOO(solver.GPUrows, solver.GPUcols, solver.GPUvals, (m,n), nnzj)
   return solver.Jx
 end
 
@@ -293,3 +299,14 @@ function update_lambda!(model :: AbstractNLSModel, solver :: MINRESSolver)
   solver.A = sparse(solver.rows, solver.cols, solver.vals)
   return solver.A
 end
+
+#= function NLPModels.jprod_residual!(nls :: AbstractNLSModel,
+                                   rows :: AbstractVector{<:Integer},
+                                   cols :: AbstractVector{<:Integer},
+                                   vals :: Union{Vector{Float32}, Vector{Float64}},
+                                   Jv :: AbstractVector)
+  @lencheck nls.nls_meta.nnzj rows cols vals
+  @lencheck nls.meta.nvar v
+  @lencheck nls.nls_meta.nequ Jv
+  increment!(nls, :neval_jprod_residual)
+=#

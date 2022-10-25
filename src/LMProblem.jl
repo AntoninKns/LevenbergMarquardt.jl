@@ -190,9 +190,12 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPGPUSo
   copyto!(F32Solver.rows, F64Solver.rows)
   copyto!(F32Solver.cols, F64Solver.cols)
   copyto!(F32Solver.vals, F64Solver.vals)
-  copyto!(F32Solver.GPUFxm, F64Solver.Fxm)
-  F32Solver.Jx = sparse(F32Solver.rows, F32Solver.cols, F32Solver.vals)
-	F32Solver.GPUJx = CuSparseMatrixCSC(F32Solver.Jx)
+	copyto!(F32Solver.GPUFxm, F64Solver.Fxm)
+	copyto!(F32Solver.GPUrows, F64Solver.rows)
+	copyto!(F32Solver.GPUcols, F64Solver.cols)
+	copyto!(F32Solver.GPUvals, F64Solver.vals)
+	F32Solver.Jx = jac_op_residual!(model, F32Solver.rows, F32Solver.cols, F32Solver.vals, F32Solver.Jv, F32Solver.Jtv)
+	F32Solver.GPUJx = CuSparseMatrixCOO(F32Solver.GPUrows, F32Solver.GPUcols, F32Solver.GPUvals, (m,n), nnzj)
   lsmr!(in_solver32, F32Solver.GPUJx, F32Solver.GPUFxm,
 		radius = F32Solver.Δ,
 		axtol = zero(Float32),
@@ -231,6 +234,9 @@ Using iterative refinement on LSMR iterative method and λ as regularization par
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPGPUSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
                             in_conlim :: AbstractFloat, :: Val{false})
+	m = model.nls_meta.nequ
+	n = model.meta.nvar
+	nnzj = model.nls_meta.nnzj
 	F32Solver, F64Solver = generic_solver.F32Solver, generic_solver.F64Solver
 	in_solver32, in_solver64 = generic_solver.F32Solver.in_solver, generic_solver.F64Solver.in_solver
 	F64Solver.Fxm .= F64Solver.Fx
@@ -240,8 +246,11 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MPGPUSo
 	copyto!(F32Solver.cols, F64Solver.cols)
 	copyto!(F32Solver.vals, F64Solver.vals)
 	copyto!(F32Solver.GPUFxm, F64Solver.Fxm)
-	F32Solver.Jx = sparse(F32Solver.rows, F32Solver.cols, F32Solver.vals)
-	F32Solver.GPUJx = CuSparseMatrixCSC(F32Solver.Jx)
+	copyto!(F32Solver.GPUrows, F64Solver.rows)
+	copyto!(F32Solver.GPUcols, F64Solver.cols)
+	copyto!(F32Solver.GPUvals, F64Solver.vals)
+	F32Solver.Jx = jac_op_residual!(model, F32Solver.rows, F32Solver.cols, F32Solver.vals, F32Solver.Jv, F32Solver.Jtv)
+	F32Solver.GPUJx = CuSparseMatrixCOO(F32Solver.GPUrows, F32Solver.GPUcols, F32Solver.GPUvals, (m,n), nnzj)
 	lsmr!(in_solver32, F32Solver.GPUJx, F32Solver.GPUFxm,
 		λ = F32Solver.λ,
 		axtol = zero(Float32),

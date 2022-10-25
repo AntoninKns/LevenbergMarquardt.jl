@@ -24,8 +24,8 @@ mutable struct GPUSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
   cols :: Vector{Int}
   vals :: S
 
-  GPUrows :: CuVector{Int}
-  GPUcols :: CuVector{Int}
+  GPUrows :: CuVector{Int32}
+  GPUcols :: CuVector{Int32}
   GPUvals :: CuVector{T}
 
   Jv :: S
@@ -37,8 +37,8 @@ mutable struct GPUSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
   Ju :: S
   Jtu :: S
 
-  Jx :: SparseMatrixCSC{T, Int64}
-  GPUJx :: CuSparseMatrixCSC{T, Int32}
+  Jx :: LinearOperator{T}
+  GPUJx :: CuSparseMatrixCOO{T, Int32}
 
   in_solver :: ST
 
@@ -73,8 +73,8 @@ mutable struct GPUSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
     cols = Vector{Int}(undef, nnzj)
     vals = similar(x, nnzj)
 
-    GPUrows = CuVector{Int}(undef, nnzj)
-    GPUcols = CuVector{Int}(undef, nnzj)
+    GPUrows = CuVector{Int32}(undef, nnzj)
+    GPUcols = CuVector{Int32}(undef, nnzj)
     GPUvals = CuVector{T}(undef, nnzj)
 
     Jv = similar(x, m)
@@ -83,8 +83,8 @@ mutable struct GPUSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
     GPUJv = CuVector{T}(undef, m)
     GPUJtv = CuVector{T}(undef, n)
 
-    Jx = sparse([one(T)], [one(T)], [one(T)])
-    GPUJx = CuSparseMatrixCSC(Jx)
+    Jx = opEye(T, n)
+    GPUJx = sparse(GPUrows, GPUcols, GPUvals, m, n, fmt=:coo)
 
     Ju = similar(x, m)
     Jtu = similar(x, n)
