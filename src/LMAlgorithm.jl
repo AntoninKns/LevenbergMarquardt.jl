@@ -87,6 +87,8 @@ function levenberg_marquardt(model :: AbstractNLSModel; which :: Symbol = :DEFAU
   elseif which == :AUTO
     ADmodel = ADBundleAdjustmentModel(model)
     generic_solver = ADSolver(ADmodel)
+  elseif which == :CG
+    generic_solver = CGSolver(model)
   else
     error("Could not recognize Levenberg-Marquardt version. Available versions are given in the docstring of the function.")
   end
@@ -132,6 +134,7 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
                               σ₁        :: T = T(10.0),
                               σ₂        :: T = T(0.1),
                               max_eval  :: Int = 2500,
+                              max_time  :: Int = 20000,
                               λmin      :: T = T(1e-1),
                               restol    :: T = T(eps(T)^(1/3)),
                               res_rtol  :: T = T(eps(T)^(1/3)),
@@ -146,6 +149,7 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
                               in_conlim :: T = 1/√eps(T),
                               verbose   :: Bool = true,
                               logging   :: IO = stdout) where {T,S,ST}
+  # Version par région de confiance à corriger
   
   # Set up initial variables contained in the solver
   (x, d, xp, solver) = set_variables!(model, generic_solver, TR, λ, Δ, λmin)
@@ -157,6 +161,7 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
   # Calculate initiale rNorm and ArNorm values
   rNorm = rNorm0 = rNorm!(solver)
   ArNorm = ArNorm0 = ArNorm!(model, solver)
+  # Remplacer rNorm par FNorm et ArNorm par JtFnorm
 
   solver.stats.rNorm0 = rNorm0
   solver.stats.ArNorm0 = ArNorm0
@@ -184,6 +189,8 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
     # Time of the step for the log
     start_step_time = time()
 
+    in_axtol = 0.
+    in_btol = 1e-8*ArNorm
     # Solve the subproblem min 1/2 ‖Jx*d + Fx‖^2 #a corriger
     solve_sub_problem!(model, generic_solver, in_axtol, in_btol, in_atol, 
                        in_rtol, in_etol, in_itmax, in_conlim, Val(solver.TR))
@@ -239,6 +246,7 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
     verbose && (inner_status = change_stats(solver))
     iter += 1
     step_time = time()-start_step_time
+    elapsed_time = time() - start_time
     verbose && (levenberg_marquardt_log_row(logging, model, solver, iter, rNorm, ArNorm, 
                                             dNorm, Ared, Pred, ρ, inner_status, 
                                             step_time, Val(solver.TR)))
@@ -246,7 +254,7 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
 
     # Update stopping conditions
     optimal = ArNorm < optimal_cond
-    tired = neval_residual(model) > max_eval
+    tired = neval_residual(model) > max_eval || elapsed_time > max_time
     small_residual = rNorm < optimal_res
 
   end

@@ -2,7 +2,7 @@
 
 Get the solution d from the subproblem.
 """
-function step!(model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver})
+function step!(model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, CGSolver})
   solver.d .= solver.in_solver.x
   return solver.d
 end
@@ -48,7 +48,7 @@ end
 
 Calculate Ared = ‖F(xk)‖² - ‖F(xk+1)‖² in order to obtain ρ = Ared / Pred which determines the quality of the step.
 """
-function ared(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver}, 
+function ared(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver, CGSolver}, 
               rNorm :: AbstractFloat, rNormp :: AbstractFloat)
   return rNorm^2 - rNormp^2
 end
@@ -60,7 +60,7 @@ end
 
 Calculate Pred = ‖F(xk)‖² - (‖J(xk)*d + F(xk)‖² + ‖d‖²) in order to obtain ρ = Ared / Pred which determines the quality of the step.
 """
-function pred(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver}, 
+function pred(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, CGSolver}, 
               rNorm :: AbstractFloat, dNorm :: AbstractFloat, :: Val{true})
   mul!(solver.Ju, solver.Jx, solver.d)
   solver.Ju .= solver.Ju .+ solver.Fx
@@ -74,7 +74,7 @@ end
 
 Calculate Pred = ‖F(xk)‖² - (‖J(xk)*d + F(xk)‖² + λ²‖d‖²) in order to obtain ρ = Ared / Pred which determines the quality of the step.
 """
-function pred(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver}, 
+function pred(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, CGSolver}, 
               rNorm :: AbstractFloat, dNorm :: AbstractFloat, :: Val{false})
   mul!(solver.Ju, solver.Jx, solver.d)
   solver.Ju .= solver.Ju .+ solver.Fx

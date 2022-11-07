@@ -4,7 +4,7 @@
 
 Set x, d, xp, solver stored in the Levenberg-Marquardt solver.
 """
-function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{LMSolver, ADSolver, GPUSolver}, 
+function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{LMSolver, ADSolver, GPUSolver, CGSolver}, 
                         TR :: Bool, λ :: AbstractFloat, Δ :: AbstractFloat, λmin :: AbstractFloat)
   x, d, xp, solver = generic_solver.x, generic_solver.d, generic_solver.xp, generic_solver
   solver.TR, solver.λ, solver.Δ, solver.λmin = TR, λ, Δ, λmin
@@ -54,7 +54,7 @@ end
 
 Calculate ∥F(xₖ)∥.
 """
-function rNorm!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver})
+function rNorm!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver, CGSolver})
   return norm(solver.Fx)
 end
 
@@ -63,7 +63,7 @@ end
 
 Calculate ∥F(x_{k+1})∥.
 """
-function rNormp!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver})
+function rNormp!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver, CGSolver})
   return norm(solver.Fxp)
 end
 
@@ -73,7 +73,7 @@ end
 
 Calculate ∥J(xₖ) × F(xₖ)∥.
 """
-function ArNorm!(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver})
+function ArNorm!(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, CGSolver})
   mul!(solver.Jtu, solver.Jx', solver.Fx)
   return norm(solver.Jtu)
 end

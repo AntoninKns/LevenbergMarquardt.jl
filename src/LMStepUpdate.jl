@@ -3,8 +3,8 @@
 
 Update the parameter Δ of the algorithm in the case of a bad step.
 """
-function bad_step_update!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver}, σ₁ :: AbstractFloat, ::Val{true})
-  solver.Δ = σ₁ * solver.Δ
+function bad_step_update!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, CGSolver}, σ₁ :: AbstractFloat, ::Val{true})
+  solver.Δ = 1/σ₁ * solver.Δ
   return solver.Δ
 end
 
@@ -13,7 +13,7 @@ end
 
 Update the parameter λ of the algorithm in the case of a bad step.
 """
-function bad_step_update!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver}, σ₁ :: AbstractFloat, :: Val{false})
+function bad_step_update!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, CGSolver}, σ₁ :: AbstractFloat, :: Val{false})
   # If λ == 0. then we set it to λmin. `<` symbol is used to avoid `==` comparison between float numbers.
   if solver.λ < solver.λmin
     solver.λ = solver.λmin
@@ -38,7 +38,7 @@ end
 
 Update the parameter Δ of the algorithm in the case of a good step.
 """
-function good_step_update!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver}, T :: Type, :: Val{true})
+function good_step_update!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver, CGSolver}, T :: Type, :: Val{true})
   # In case of a good step we don't change Δ. This function purpose is to have a more generic and performant algorithm using multiple dispatch.
   return solver.Δ
 end
@@ -48,7 +48,7 @@ end
 
 Update the parameter Δ of the algorithm in the case of a good step.
 """
-function good_step_update!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver}, T :: Type, :: Val{false})
+function good_step_update!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver, CGSolver}, T :: Type, :: Val{false})
   # If λ == 0. then we set it to 0. `<` symbol is used to avoid `==` comparison between float numbers.
   if solver.λ < solver.λmin
     solver.λ = zero(T)
@@ -70,8 +70,8 @@ end
 
 Update the parameter Δ of the algorithm in the case of a very good step.
 """
-function very_good_step_update!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver}, σ₂ :: AbstractFloat, :: Val{true})
-  solver.Δ = σ₂ * solver.Δ
+function very_good_step_update!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver, CGSolver}, σ₂ :: AbstractFloat, :: Val{true})
+  solver.Δ = 1/σ₂ * solver.Δ
   return solver.Δ
 end
 
@@ -80,7 +80,7 @@ end
 
 Update the parameter Δ of the algorithm in the case of a very good step.
 """
-function very_good_step_update!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver}, σ₂ :: AbstractFloat, :: Val{false})
+function very_good_step_update!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver, CGSolver}, σ₂ :: AbstractFloat, :: Val{false})
   solver.λ = σ₂ * solver.λ
   return solver.λ
 end
@@ -92,7 +92,6 @@ Update the parameter Δ of the algorithm in the case of a very good step.
 """
 function very_good_step_update!(solver :: Union{LDLSolver, MINRESSolver}, σ₂ :: AbstractFloat, :: Val{false})
   solver.λ = σ₂ * solver.λ
-  # If λ == 0. then we set it to λmin. `<` symbol is used to avoid `==` comparison between float numbers.
   if solver.λ < solver.λmin
     solver.λ = solver.λmin
   end

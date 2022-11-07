@@ -3,7 +3,7 @@
 
 Calculate F(xk) = ½‖f(xk)‖².
 """
-function residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, ADSolver})
+function residualLM!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, ADSolver, CGSolver})
   residual!(model, x, solver.Fx)
   return solver.Fx
 end
@@ -40,7 +40,7 @@ end
 
 Calculate F(xk+1) = ½‖f(xk+1)‖².
 """
-function residualLMp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{LMSolver, ADSolver})
+function residualLMp!(model :: AbstractNLSModel, xp :: AbstractVector, solver :: Union{LMSolver, ADSolver, CGSolver})
   residual!(model, xp, solver.Fxp)
   return solver.Fxp
 end

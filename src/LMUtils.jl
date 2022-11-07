@@ -3,7 +3,7 @@
 
 Shortens status log of Levenberg Marquardt subproblem.
 """
-function change_stats(solver :: Union{LMSolver, ADSolver, GPUSolver, MINRESSolver})
+function change_stats(solver :: Union{LMSolver, ADSolver, GPUSolver, MINRESSolver, CGSolver})
   status = solver.in_solver.stats.status
   if status == "maximum number of iterations exceeded"
     status = "iter"
@@ -105,6 +105,26 @@ function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, s
                                       ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
                                       inner_status :: String, step_time :: AbstractFloat, ::Val{false})
   Jcond = solver.in_solver.stats.Acond
+  inner_iter = solver.in_solver.stats.niter
+  @printf(logging, "| %4d %1.2e %1.2e %1.2e %1.2e % 1.2e % 1.2e % 1.2e %1.2e %4s %6d %1.2e %8d |\n", iter, rNorm, ArNorm, dNorm, solver.λ, Ared, Pred, ρ, 
+          Jcond, inner_status, inner_iter, step_time, neval_jprod_residual(model))
+end
+
+function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: CGSolver, iter :: Integer, rNorm :: AbstractFloat, 
+                                      ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
+                                      inner_status :: String, step_time :: AbstractFloat, ::Val{true})
+  T = eltype(solver.x)
+  Jcond = zero(T)
+  inner_iter = solver.in_solver.stats.niter
+  @printf(logging, "| %4d %1.2e %1.2e %1.2e %1.2e % 1.2e % 1.2e % 1.2e %1.2e %4s %6d %1.2e %8d |\n", iter, rNorm, ArNorm, dNorm, solver.Δ, Ared, Pred, ρ, 
+          Jcond, inner_status, inner_iter, step_time, neval_jprod_residual(model))
+end
+
+function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: CGSolver, iter :: Integer, rNorm :: AbstractFloat, 
+                                      ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
+                                      inner_status :: String, step_time :: AbstractFloat, ::Val{false})
+  T = eltype(solver.x)
+  Jcond = zero(T)
   inner_iter = solver.in_solver.stats.niter
   @printf(logging, "| %4d %1.2e %1.2e %1.2e %1.2e % 1.2e % 1.2e % 1.2e %1.2e %4s %6d %1.2e %8d |\n", iter, rNorm, ArNorm, dNorm, solver.λ, Ared, Pred, ρ, 
           Jcond, inner_status, inner_iter, step_time, neval_jprod_residual(model))

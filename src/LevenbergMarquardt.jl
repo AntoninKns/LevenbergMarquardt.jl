@@ -1,12 +1,11 @@
 module LevenbergMarquardt
 
 using Krylov, BundleAdjustmentModels, Printf, NLPModels, LinearAlgebra
-using ReverseADNLSModels, ForwardDiff, ReverseDiff, SparseDiffTools
+using ReverseADNLSModels
 using LinearOperators
 using SparseArrays
 using LDLFactorizations, LimitedLDLFactorizations
 using CUDA, CUDA.CUSPARSE
-using Arpack
 using OperatorScaling
 
 include("LMStats.jl")

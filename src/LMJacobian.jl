@@ -4,7 +4,7 @@
 
 Set the first value of the linear operator for the Jacobian.
 """
-function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: LMSolver)
+function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, CGSolver})
   jac_structure_residual!(model, solver.rows, solver.cols)
   jac_coord_residual!(model, x, solver.vals)
   solver.Jx = jac_op_residual!(model, solver.rows, solver.cols, solver.vals, solver.Jv, solver.Jtv)
@@ -132,7 +132,7 @@ end
 
 Update the linear operator for the Jacobian.
 """
-function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: LMSolver)
+function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: Union{LMSolver, CGSolver})
   jac_coord_residual!(model, x, solver.vals)
   solver.Jx = jac_op_residual!(model, solver.rows, solver.cols, solver.vals, solver.Jv, solver.Jtv)
   return solver.Jx
@@ -247,7 +247,7 @@ end
 
 Update λ in case of a good or very good step.
 """
-function update_lambda!(model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver})
+function update_lambda!(model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver, CGSolver})
   # For these solvers, λ is updated directly in the subproblem, this function exists only
   # for better code genericity
   return solver.Jx

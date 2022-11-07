@@ -11,7 +11,7 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: Union{L
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
                             in_conlim :: AbstractFloat, :: Val{true})
   generic_solver.Fxm .= generic_solver.Fx
-  generic_solver.Fxm .*= -1 
+  generic_solver.Fxm .*= -1
   lsmr!(generic_solver.in_solver, generic_solver.Jx, generic_solver.Fxm, radius = generic_solver.Δ,
     axtol = in_axtol, btol = in_btol, atol = in_atol, rtol = in_rtol, etol = in_etol,
     itmax = in_itmax, conlim = in_conlim)
@@ -30,11 +30,22 @@ Using LSMR iterative method and λ as regularization parameter.
 function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: Union{LMSolver, ADSolver}, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
                             in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
                             in_conlim :: AbstractFloat, :: Val{false})
+	m = model.nls_meta.nequ
+	n = model.meta.nvar
   generic_solver.Fxm .= generic_solver.Fx
-  generic_solver.Fxm .*= -1 
+  generic_solver.Fxm .*= -1
+#= 	D1 = Diagonal{Float64}(undef, m)
+	D2 = Diagonal{Float64}(undef, n)
+	R_k = Diagonal{Float64}(undef, m)
+	C_k = Diagonal{Float64}(undef, n)
+	A = sparse(generic_solver.rows, generic_solver.cols, generic_solver.vals)
+	equilibrate!(A, D1, D2, R_k, C_k, ϵ=10e-6)
+	D1Fxm = D1 * generic_solver.Fxm =#
   lsmr!(generic_solver.in_solver, generic_solver.Jx, generic_solver.Fxm, λ = generic_solver.λ,
+	# lsmr!(generic_solver.in_solver, A, D1Fxm, λ = generic_solver.λ,
     axtol = in_axtol, btol = in_btol, atol = in_atol, rtol = in_rtol, etol = in_etol,
     itmax = in_itmax, conlim = in_conlim)
+	# generic_solver.in_solver.x = D2 * generic_solver.in_solver.x
   return generic_solver.in_solver
 end
 
@@ -332,4 +343,57 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MINRESS
 	minres!(generic_solver.in_solver, generic_solver.A, generic_solver.Fxm,
     M=P, rtol=zero(T), atol=zero(T), etol=zero(T), ldiv=true)
 	return generic_solver.in_solver
+end
+
+"""
+		generic_solver.in_solver = solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: Union{LMSolver, ADSolver}, 
+																									in_axtol :: AbstractFloat, in_btol :: AbstractFloat, in_atol :: AbstractFloat, 
+																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+																									in_conlim :: AbstractFloat, :: Val{true})
+
+Solve the sub problem minimize ½‖J(xk) d + F(xk)‖² of Levenberg Marquardt Algorithm.
+Using LSMR iterative method and Δ as trust region radius.
+"""
+function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: CGSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
+                            in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+                            in_conlim :: AbstractFloat, :: Val{true})
+  generic_solver.Fxm .= generic_solver.Fx
+  generic_solver.Fxm .*= -1
+  lsmr!(generic_solver.in_solver, generic_solver.Jx, generic_solver.Fxm, radius = generic_solver.Δ,
+    axtol = in_axtol, btol = in_btol, atol = in_atol, rtol = in_rtol, etol = in_etol,
+    itmax = in_itmax, conlim = in_conlim)
+  return generic_solver.in_solver
+end
+
+"""
+		generic_solver.in_solver = solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: Union{LMSolver, ADSolver}, 
+																									in_axtol :: AbstractFloat, in_btol :: AbstractFloat, in_atol :: AbstractFloat, 
+																									in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+																									in_conlim :: AbstractFloat, :: Val{false})
+
+Solve the sub problem minimize ½(‖J(xk) d + F(xk)‖² + λ²‖d‖²) of Levenberg Marquardt Algorithm.
+Using LSMR iterative method and λ as regularization parameter.
+"""
+function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: CGSolver, in_axtol :: AbstractFloat, in_btol :: AbstractFloat, 
+                            in_atol :: AbstractFloat, in_rtol :: AbstractFloat, in_etol :: AbstractFloat, in_itmax :: Integer, 
+                            in_conlim :: AbstractFloat, :: Val{false})
+	m = model.nls_meta.nequ
+	n = model.meta.nvar
+  generic_solver.JtFxm .= generic_solver.Jx' * generic_solver.Fx
+  generic_solver.JtFxm .*= -1
+#= 	D1 = Diagonal{Float64}(undef, m)
+	D2 = Diagonal{Float64}(undef, n)
+	R_k = Diagonal{Float64}(undef, m)
+	C_k = Diagonal{Float64}(undef, n)
+	A = sparse(generic_solver.rows, generic_solver.cols, generic_solver.vals)
+	equilibrate!(A, D1, D2, R_k, C_k, ϵ=10e-6)
+	D1Fxm = D1 * generic_solver.Fxm =#
+	# Jx = sparse(generic_solver.rows, generic_solver.cols, generic_solver.vals)
+	JtJ = generic_solver.Jx' * generic_solver.Jx
+	# println(typeof(JtJ))
+  cg!(generic_solver.in_solver, JtJ, generic_solver.JtFxm,
+	# lsmr!(generic_solver.in_solver, A, D1Fxm, λ = generic_solver.λ,
+    atol = in_atol, rtol = in_rtol, itmax = in_itmax)
+	# generic_solver.in_solver.x = D2 * generic_solver.in_solver.x
+  return generic_solver.in_solver
 end
