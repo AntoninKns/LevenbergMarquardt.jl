@@ -64,6 +64,8 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
                               σ₁        :: T = T(10.0),
                               σ₂        :: T = T(0.1),
                               max_eval  :: Int = 2500,
+                              max_time  :: Int = 20000,
+                              max_iter  :: Int = 2500,
                               λmin      :: T = T(1e-1),
                               restol    :: T = T(eps(T)^(1/3)),
                               res_rtol  :: T = T(eps(T)^(1/3)),
@@ -201,6 +203,7 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
     verbose && (inner_status = change_stats(solver))
     iter += 1
     step_time = time()-start_step_time
+    elapsed_time = time() - start_time
     verbose && (levenberg_marquardt_log_row(logging, model, solver, iter, rNorm, ArNorm, 
                                             dNorm, Ared, Pred, ρ, inner_status, 
                                             step_time, Val(solver.TR)))
@@ -208,7 +211,7 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
 
     # Update stopping conditions
     optimal = ArNorm < optimal_cond
-    tired = neval_residual(model) > max_eval
+    tired = neval_residual(model) > max_eval || elapsed_time > max_time || iter > max_iter
     small_residual = rNorm < optimal_res
 
   end
