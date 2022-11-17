@@ -8,6 +8,7 @@ using LDLFactorizations, LimitedLDLFactorizations
 using CUDA, CUDA.CUSPARSE
 using Arpack
 using RipQP
+using HSL
 
 include("LMStats.jl")
 include("solvers/AbstractLMSolver.jl")

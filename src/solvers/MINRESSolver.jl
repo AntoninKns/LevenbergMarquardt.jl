@@ -53,7 +53,7 @@ mutable struct MINRESSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
     A = sparse([one(T)], [one(T)], [one(T)])
 
-    in_solver = MinresSolver(m+n, m+n, S)
+    in_solver = MinresQlpSolver(m+n, m+n, S)
 
     TR = false
     λ = one(T)

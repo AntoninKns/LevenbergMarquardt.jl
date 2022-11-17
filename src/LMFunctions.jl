@@ -216,3 +216,11 @@ function minres_callback(model, solver)
   end
   return false
 end
+
+import LinearAlgebra.ldiv!
+
+function ldiv!(y :: Vector{T}, ma57 :: HSL.Ma57{T}, b :: Vector{T}) where T
+  y .= b
+  ma57_solve!(ma57, y, Vector{T}(undef, ma57.n * size(b, 2)))
+  return y
+end

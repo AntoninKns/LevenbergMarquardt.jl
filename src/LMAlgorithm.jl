@@ -14,8 +14,10 @@ function levenberg_marquardt(model :: AbstractNLSModel; version :: Symbol = :DEF
   elseif version == :LDL
     generic_solver = LDLSolver(model)
   elseif version == :MP
+    println("not working properly")
     generic_solver = MPSolver(model, precisions)
   elseif version == :MPGPU
+    println("not working properly")
     CUDA.allowscalar(false)
     generic_solver = MPGPUSolver(model, precisions)
   elseif version == :MINRES
@@ -121,7 +123,7 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
     LDLT = solve_sub_problem!(model, generic_solver, in_axtol, in_btol, in_atol, 
                        in_rtol, in_etol, in_itmax, in_conlim, Val(solver.TR))
 
-    if iter % 10 == 0
+#=     if iter % 10 == 0
     #if iter > 68
 #=       stats = solver.in_solver.stats
       println("Residus itérations MINRES")
@@ -145,7 +147,9 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
       A = sparse(vcat(solver.rows, 1:n), vcat(solver.cols, 1:n), vcat(solver.vals, solver.λ*ones(n)))
       println(cond(A'*A, Inf)) =#
       #println(norm(generic_solver.fulld))
-    end
+      L, D, s, iperm = ma57_get_factors(LDLT)
+      println(findmin(abs.(nonzeros(D))))
+    end =#
     # Calculate ‖d‖, xk+1, F(xk+1) and ‖F(xk+1)‖
     d = step!(model, solver)
     dNorm = norm(d)
