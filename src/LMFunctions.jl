@@ -224,3 +224,12 @@ function ldiv!(y :: Vector{T}, ma57 :: HSL.Ma57{T}, b :: Vector{T}) where T
   ma57_solve!(ma57, y, Vector{T}(undef, ma57.n * size(b, 2)))
   return y
 end
+
+function ldiv!(y :: Vector{Float64}, ma57 :: HSL.Ma57{Float32}, b :: Vector{Float64})
+  n = length(y)
+  y32 = Vector{Float32}(undef, n)
+  copyto!(y32, b)
+  ma57_solve!(ma57, y32, Vector{Float32}(undef, ma57.n * size(b, 2)))
+  copyto!(y, y32)
+  return y
+end

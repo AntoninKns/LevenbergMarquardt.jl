@@ -267,8 +267,9 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: LDLSolv
 	n = model.meta.nvar
 	T = eltype(generic_solver.x)
 	generic_solver.Fxm .= generic_solver.Fx
-	generic_solver.Fxm .*= -1 
-	LDL = Ma57(generic_solver.A)
+	generic_solver.Fxm .*= -1
+	Au = sparse(Symmetric(triu(generic_solver.A), :U))
+	LDL = Ma57(Au)
 	ma57_factorize!(LDL)
 #= 	(L, D, s, p) = ma57_get_factors(LDL)
 	d1 = diag(D)
@@ -300,6 +301,7 @@ end
 function def_pos_lbl(M :: AbstractMatrix)
   n = size(M,2)
 	i = 1
+	T = typeof(M[1,1])
 	while i <= n
 		if abs(M[2,i]) <= 1e-14
 			M[1,i] = abs(M[1,i])
@@ -307,9 +309,9 @@ function def_pos_lbl(M :: AbstractMatrix)
 		else
 			det_M = M[1,i]*M[1,i+1] - M[2,i]^2
 			trace_M = M[1,i] + M[1,i+1]
-			l1, l2 = Krylov.roots_quadratic(-1., trace_M, -det_M)
+			l1, l2 = Krylov.roots_quadratic(-one(T), trace_M, -det_M)
 			if l1 < 0. || l2 < 0.
-				l = max(abs(l1), abs(l2)) + 1.
+				l = max(abs(l1), abs(l2)) + one(T)
 				M[1, i] += l 
 				M[1, i+1] += l
 			end
@@ -330,19 +332,15 @@ function solve_sub_problem!(model :: AbstractNLSModel, generic_solver :: MINRESS
 	generic_solver.Fxm .*= -1
   T = eltype(generic_solver.x)
 	A32 = Float32.(generic_solver.A)
-	LDL = Ma57(Au)
+	LDL = Ma57(A32)
 	ma57_factorize!(LDL)
 	(L, D, s, p) = ma57_get_factors(LDL)
-	println(typeof(D))
 	d1 = diag(D)
-	println(typeof(d1))
 	d2 = [diag(D, 1) ; zero(Float32)][:]
-	println(typeof(d2))
 	F = [Vector(d1)' ; Vector(d2)']
-	println(typeof(F))
 	def_pos_lbl(F)
 	inv_lbl!(F)
-      # D2 = abs.(D)
+  # D2 = abs.(D)
   ma57_alter_d(LDL, F)
 #= 	P = lldl(generic_solver.A)
 	P.D .= abs.(P.D) =#
