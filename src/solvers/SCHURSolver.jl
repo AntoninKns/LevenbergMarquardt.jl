@@ -1,4 +1,4 @@
-export LMSolver
+export SCHURSolver
 
 """
 Type for storing the vectors required by the in-place version of LevenbergMarquardt.
@@ -6,28 +6,32 @@ The outer constructor
     solver = LMSolver(n, m, S)
 may be used in order to create these vectors.
 """
-mutable struct LMSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
+mutable struct SCHURSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
   x :: S
   Fx :: S
   Fxp :: S
   xp :: S
-  Fxm :: S
+  JtFxm :: S
   d :: S
 
   rows :: Vector{Int}
   cols :: Vector{Int}
   vals :: S
 
+  Jx :: SparseMatrixCSC{T, Int64}
+
+  JtJ :: SparseMatrixCSC{T, Int64}
+  B :: SparseMatrixCSC{T, Int64}
+  C :: SparseMatrixCSC{T, Int64}
+  E :: SparseMatrixCSC{T, Int64}
+  Schur :: SparseMatrixCSC{T, Int64}
+
   Jv :: S
   Jtv :: S
 
   Ju :: S
   Jtu :: S
-
-  Jx :: LinearOperator{T}
-
-  in_solver :: ST
 
   TR :: Bool
   λ :: T
@@ -36,24 +40,34 @@ mutable struct LMSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
 
   stats :: LMStats{T,S}
 
-  function LMSolver(model; 
+  function SCHURSolver(model; 
                     T = eltype(model.meta.x0), 
                     S = typeof(model.meta.x0))
   
     m = model.nls_meta.nequ
     n = model.meta.nvar
     nnzj = model.nls_meta.nnzj
+    npnts = model.npnts
+    ncams = model.ncams
 
     x = S(undef, n)
     Fx = S(undef, m)
     Fxp = S(undef, m)
     xp = S(undef, n)
-    Fxm = S(undef, m)
+    JtFxm = S(undef, n)
     d = S(undef, n)
 
     rows = Vector{Int}(undef, nnzj)
     cols = Vector{Int}(undef, nnzj)
     vals = S(undef, nnzj)
+
+    Jx = SparseMatrixCSC{T, Int64}(I, m, n)
+
+    JtJ = SparseMatrixCSC{T, Int64}(I, n, n)
+    B = SparseMatrixCSC{T, Int64}(I, 3*npnts, 3*npnts)
+    C = SparseMatrixCSC{T, Int64}(I, 9*ncams, 9*ncams)
+    E = SparseMatrixCSC{T, Int64}(I, 3*npnts, 9*ncams)
+    Schur = SparseMatrixCSC{T, Int64}(I, 9*ncams, 9*ncams)
 
     Jv = S(undef, m)
     Jtv = S(undef, n)
@@ -61,22 +75,17 @@ mutable struct LMSolver{T,S,ST} <: AbstractLMSolver{T,S,ST}
     Ju = S(undef, m)
     Jtu = S(undef, n)
 
-    Jx = opEye(T, n)
-
-    in_solver = LsmrSolver(m, n, S)
-    # in_solver = TrimrSolver(m, n, S)
-
     TR = false
     λ = zero(T)
     Δ = zero(T)
     λmin = zero(T)
 
-    ST = typeof(in_solver)
+    ST = Float64
 
     stats = LMStats(model, :unknown, similar(x), zero(T), zero(T), zero(T), zero(T), 0, 0, 0.)
 
-    solver = new{T,S,ST}(x, Fx, Fxp, xp, Fxm, d, rows, cols, vals, Jv, Jtv, Ju, Jtu, Jx,
-                          in_solver, TR, λ, Δ, λmin, stats)
+    solver = new{T,S,ST}(x, Fx, Fxp, xp, JtFxm, d, rows, cols, vals, Jx, JtJ, B, C, E, Schur, Jv, Jtv, Ju, Jtu,
+                         TR, λ, Δ, λmin, stats)
 
     return solver
   end

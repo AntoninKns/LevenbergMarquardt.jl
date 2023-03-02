@@ -33,7 +33,7 @@ x, d, xp, solver = set_variables!(model :: AbstractNLSModel, generic_solver :: U
 
 Set x, d, xp, solver stored in the Levenberg-Marquardt solver.
 """
-function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{LDLSolver, MINRESSolver},
+function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{LDLSolver, MINRESSolver, SCHURSolver},
                         TR :: Bool, λ :: AbstractFloat, Δ :: AbstractFloat, λmin :: AbstractFloat)
   T = eltype(generic_solver.x)
   if TR
@@ -41,7 +41,8 @@ function set_variables!(model :: AbstractNLSModel, generic_solver :: Union{LDLSo
   end
   if λ < 1e-10
     @printf("λ is too small, LDL factorization cannot be computed, setting λ to 1 instead.\n")
-    λ = one(T)
+    #λ = one(T)
+    λ = 1e-4
   end
   x, d, xp, solver = generic_solver.x, generic_solver.d, generic_solver.xp, generic_solver
   solver.TR, solver.λ, solver.Δ, solver.λmin = TR, λ, Δ, λmin
@@ -54,7 +55,7 @@ end
 
 Calculate ∥F(xₖ)∥.
 """
-function rNorm!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver, CGSolver})
+function rNorm!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver, CGSolver, SCHURSolver})
   return norm(solver.Fx)
 end
 
@@ -63,7 +64,7 @@ end
 
 Calculate ∥F(x_{k+1})∥.
 """
-function rNormp!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver, CGSolver})
+function rNormp!(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver, CGSolver, SCHURSolver})
   return norm(solver.Fxp)
 end
 
@@ -71,9 +72,9 @@ end
 """
     ArNorm!(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver})
 
-Calculate ∥J(xₖ) × F(xₖ)∥.
+Calculate ∥J(xₖ)ᵀF(xₖ)∥.
 """
-function ArNorm!(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, CGSolver})
+function ArNorm!(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, CGSolver, SCHURSolver})
   mul!(solver.Jtu, solver.Jx', solver.Fx)
   return norm(solver.Jtu)
 end
@@ -81,7 +82,7 @@ end
 """
     ArNorm!(model :: AbstractNLSModel, solver :: Union{LDLSolver, MINRESSolver})
 
-Calculate ∥J(xₖ) × F(xₖ)∥.
+Calculate ∥J(xₖ)ᵀF(xₖ)∥.
 """
 function ArNorm!(model :: AbstractNLSModel, solver :: Union{LDLSolver, MINRESSolver})
   m = model.nls_meta.nequ
@@ -106,4 +107,16 @@ function minres_callback(model, solver)
     return true
   end
   return false
+end
+
+function inv_block_diag!(M :: AbstractMatrix)
+	n = size(M,2)
+	i = 1
+	while i <= n
+    bloc = Array(M[i:i+2,i:i+2])
+    blocinv = inv(bloc)
+    M[i:i+2,i:i+2] = sparse(blocinv)
+    i += 3
+	end
+	return M
 end

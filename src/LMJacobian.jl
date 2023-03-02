@@ -127,6 +127,13 @@ function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solve
   return solver.A
 end
 
+function set_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: SCHURSolver)
+  jac_structure_residual!(model, solver.rows, solver.cols)
+  jac_coord_residual!(model, x, solver.vals)
+  solver.Jx .= sparse(solver.rows, solver.cols, solver.vals)
+  return solver.Jx
+end
+
 """
     solver.Jx = update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: LMSolver)
 
@@ -242,12 +249,18 @@ function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, so
   return solver.A
 end
 
+function update_jac_residual!(model :: AbstractNLSModel, x :: AbstractVector, solver :: SCHURSolver)
+  jac_coord_residual!(model, x, solver.vals)
+  solver.Jx .= sparse(solver.rows, solver.cols, solver.vals)
+  return solver.Jx
+end
+
 """
     solver.Jx = update_lambda!(model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver})
 
 Update λ in case of a good or very good step.
 """
-function update_lambda!(model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver, CGSolver})
+function update_lambda!(model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver, CGSolver, SCHURSolver})
   # For these solvers, λ is updated directly in the subproblem, this function exists only
   # for better code genericity
   return solver.Jx

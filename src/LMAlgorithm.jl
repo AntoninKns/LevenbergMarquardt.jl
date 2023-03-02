@@ -77,24 +77,30 @@ function levenberg_marquardt(model :: AbstractNLSModel; which :: Symbol = :DEFAU
   elseif which == :LDL
     generic_solver = LDLSolver(model)
   elseif which == :MP
+    println("Not working properly")
     generic_solver = MPSolver(model, precisions)
   elseif which == :MPGPU
     # If the code is run on GPU, indexing elemnts are forbidden.
+    println("Not working properly")
     CUDA.allowscalar(false)
     generic_solver = MPGPUSolver(model, precisions)
   elseif which == :MINRES
     generic_solver = MINRESSolver(model)
   elseif which == :AUTO
-    ADmodel = ADBundleAdjustmentModel(model)
-    generic_solver = ADSolver(ADmodel)
+    # ADmodel = ADBundleAdjustmentModel(model)
+    # generic_solver = ADSolver(ADmodel)
+    generic_solver = ADSolver(model)
   elseif which == :CG
     generic_solver = CGSolver(model)
+  elseif which == :SCHUR
+    generic_solver = SCHURSolver(model)
   else
     error("Could not recognize Levenberg-Marquardt version. Available versions are given in the docstring of the function.")
   end
 
   if which == :AUTO
-    levenberg_marquardt!(generic_solver, ADmodel; kwargs...)
+    # levenberg_marquardt!(generic_solver, ADmodel; kwargs...)
+    levenberg_marquardt!(generic_solver, model; kwargs...)
   else
     levenberg_marquardt!(generic_solver, model; kwargs...)
   end
@@ -190,14 +196,12 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
     # Time of the step for the log
     start_step_time = time()
 
-    in_axtol = 0.
-    in_btol = 1e-8*ArNorm
     # Solve the subproblem min 1/2 ‖Jx*d + Fx‖^2 #a corriger
     solve_sub_problem!(model, generic_solver, in_axtol, in_btol, in_atol, 
                        in_rtol, in_etol, in_itmax, in_conlim, Val(solver.TR))
 
     # Calculate ‖d‖, xk+1, F(xk+1) and ‖F(xk+1)‖
-    d = step!(model, solver)
+    d = step!(model, generic_solver)
     dNorm = norm(d)
     xp .= x .+ d
     residualLMp!(model, xp, solver)
@@ -254,6 +258,7 @@ function levenberg_marquardt!(generic_solver :: Union{AbstractLMSolver{T,S,ST}, 
     (logging != stdout) && flush(logging)
 
     # Update stopping conditions
+    ###### Add stopping condition in case problem diverges ######
     optimal = ArNorm < optimal_cond
     tired = neval_residual(model) > max_eval || elapsed_time > max_time || iter > max_iter
     small_residual = rNorm < optimal_res

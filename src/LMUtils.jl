@@ -36,6 +36,10 @@ function change_stats(solver :: LDLSolver)
   return "LDL"
 end
 
+function change_stats(solver :: SCHURSolver)
+  return "SCHR"
+end
+
 """
     levenberg_marquardt_log_header(logging :: IO, model :: AbstractNLSModel, solver :: AbstractLMSolver, η₁ :: AbstractFloat, η₂ :: AbstractFloat, 
                                     σ₁ :: AbstractFloat, σ₂ :: AbstractFloat, max_eval :: Integer, restol :: AbstractFloat, res_rtol :: AbstractFloat, 
@@ -104,7 +108,8 @@ Row of Levenberg Marquardt logs for regularized version. Estimation of Jcond is 
 function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, GPUSolver}, iter :: Integer, rNorm :: AbstractFloat, 
                                       ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
                                       inner_status :: String, step_time :: AbstractFloat, ::Val{false})
-  Jcond = solver.in_solver.stats.Acond
+  # Jcond = solver.in_solver.stats.Acond
+  Jcond = 0.
   inner_iter = solver.in_solver.stats.niter
   @printf(logging, "| %4d %1.2e %1.2e %1.2e %1.2e % 1.2e % 1.2e % 1.2e %1.2e %4s %6d %1.2e %8d |\n", iter, rNorm, ArNorm, dNorm, solver.λ, Ared, Pred, ρ, 
           Jcond, inner_status, inner_iter, step_time, neval_jprod_residual(model))
@@ -137,7 +142,7 @@ end
 
 Row of Levenberg Marquardt logs for regularized version. Jcond is not available and no inner iteration.
 """
-function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: LDLSolver, iter :: Integer, rNorm :: AbstractFloat, 
+function levenberg_marquardt_log_row(logging :: IO, model :: AbstractNLSModel, solver :: Union{LDLSolver,SCHURSolver}, iter :: Integer, rNorm :: AbstractFloat, 
                                       ArNorm :: AbstractFloat, dNorm :: AbstractFloat, Ared :: AbstractFloat, Pred :: AbstractFloat, ρ :: AbstractFloat, 
                                       inner_status :: String, step_time :: AbstractFloat, ::Val{false})
   T = eltype(solver.x)

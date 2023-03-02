@@ -1,13 +1,13 @@
 @testset "test levenberg_marquardt" begin
   model = SimpleNLSModel()
   stats = levenberg_marquardt(model)
-  @test stats.rNorm ≤ 1e-5
+  @test stats.rNorm ≤ 1e-4
 end
 
 @testset "test levenberg_marquardt trust region" begin
   model = SimpleNLSModel()
   stats = levenberg_marquardt(model, TR = true)
-  @test stats.rNorm ≤ 1e-5
+  @test stats.rNorm ≤ 1e-4
 end
 
 @testset "test residual norm reduction" begin

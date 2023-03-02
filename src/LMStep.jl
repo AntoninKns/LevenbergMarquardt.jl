@@ -2,9 +2,10 @@
 
 Get the solution d from the subproblem.
 """
-function step!(model :: AbstractNLSModel, solver :: Union{LMSolver, ADSolver, CGSolver})
-  solver.d .= solver.in_solver.x
-  return solver.d
+function step!(model :: AbstractNLSModel, generic_solver :: Union{LMSolver, ADSolver, CGSolver})
+  generic_solver.d .= generic_solver.in_solver.x
+  # generic_solver.d .= generic_solver.in_solver.y
+  return generic_solver.d
 end
 
 """
@@ -12,9 +13,26 @@ end
 
 Get the solution d from the subproblem.
 """
-function step!(model :: AbstractNLSModel, solver :: Union{MPSolver, GPUSolver, MPGPUSolver})
-  copyto!(solver.d, solver.in_solver.x)
-  return solver.d
+function step!(model :: AbstractNLSModel, generic_solver :: MPSolver)
+  # println("correcting step function")
+  copyto!(generic_solver.F64Solver.d, generic_solver.F32Solver.in_solver.x)
+  generic_solver.F64Solver.d .= generic_solver.F64Solver.d .+ generic_solver.F64Solver.in_solver.x
+  return generic_solver.F64Solver.d
+end
+
+function step!(model :: AbstractNLSModel, generic_solver :: MPGPUSolver)
+  # println("correcting step function")
+  copyto!(generic_solver.F64Solver.d, generic_solver.F32Solver.in_solver.x)
+  n = model.meta.nvar
+  d = Vector{Float64}(undef, n)
+  copyto!(d, generic_solver.F64Solver.in_solver.x)
+  generic_solver.F64Solver.d .= generic_solver.F64Solver.d .+ d
+  return generic_solver.F64Solver.d
+end
+
+function step!(model :: AbstractNLSModel, generic_solver :: GPUSolver)
+  copyto!(generic_solver.d, generic_solver.in_solver.x)
+  return generic_solver.d
 end
 
 """
@@ -22,11 +40,11 @@ end
 
 Get the solution d from the subproblem.
 """
-function step!(model :: AbstractNLSModel, solver :: LDLSolver)
+function step!(model :: AbstractNLSModel, generic_solver :: LDLSolver)
   m = model.nls_meta.nequ
   n = model.meta.nvar
-  @views solver.d = solver.fulld[m+1:m+n]
-  return solver.d
+  @views generic_solver.d = generic_solver.fulld[m+1:m+n]
+  return generic_solver.d
 end
 
 """
@@ -34,12 +52,16 @@ end
 
 Get the solution d from the subproblem.
 """
-function step!(model :: AbstractNLSModel, solver :: MINRESSolver)
+function step!(model :: AbstractNLSModel, generic_solver :: MINRESSolver)
   m = model.nls_meta.nequ
   n = model.meta.nvar
-  solver.fulld .= solver.in_solver.x
-  @views solver.d = solver.fulld[m+1:m+n]
-  return solver.d
+  generic_solver.fulld .= generic_solver.in_solver.x
+  @views generic_solver.d = generic_solver.fulld[m+1:m+n]
+  return generic_solver.d
+end
+
+function step!(model :: AbstractNLSModel, generic_solver :: SCHURSolver)
+  return generic_solver.d
 end
 
 """
@@ -48,7 +70,7 @@ end
 
 Calculate Ared = ‖F(xk)‖² - ‖F(xk+1)‖² in order to obtain ρ = Ared / Pred which determines the quality of the step.
 """
-function ared(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver, CGSolver}, 
+function ared(solver :: Union{LMSolver, MPSolver, ADSolver, GPUSolver, MPGPUSolver, LDLSolver, MINRESSolver, CGSolver, SCHURSolver}, 
               rNorm :: AbstractFloat, rNormp :: AbstractFloat)
   return rNorm^2 - rNormp^2
 end
@@ -80,6 +102,14 @@ function pred(model :: AbstractNLSModel, solver :: Union{LMSolver, MPSolver, ADS
   solver.Ju .= solver.Ju .+ solver.Fx
   normJu = norm(solver.Ju)
   return rNorm^2 - (normJu^2 + solver.λ^2*dNorm^2)
+end
+
+function pred(model :: AbstractNLSModel, solver :: SCHURSolver, 
+              rNorm :: AbstractFloat, dNorm :: AbstractFloat, :: Val{false})
+mul!(solver.Ju, solver.Jx, solver.d)
+solver.Ju .= solver.Ju .+ solver.Fx
+normJu = norm(solver.Ju)
+return rNorm^2 - normJu^2
 end
 
 """
